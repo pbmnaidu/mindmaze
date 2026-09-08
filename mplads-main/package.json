@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "build": "cd frontend && npm install && npm run build",
     "backend": "python -m uvicorn src.backend.app:app --host 127.0.0.1 --port 8000 --reload",
     "frontend": "npm --prefix frontend run dev",
     "frontend:install": "npm --prefix frontend install",
