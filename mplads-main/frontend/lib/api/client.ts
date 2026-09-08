@@ -1,7 +1,7 @@
 import type { ApiResult } from "@/lib/types";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "/api";
 
 /**
  * Development-only fallback. Sample data is only ever served when the backend is
