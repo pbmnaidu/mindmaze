@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { RoleScopeProvider } from "@/components/providers/role-scope-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -40,9 +41,11 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} bg-background`}>
       <body>
         <QueryProvider>
-          <TooltipProvider delayDuration={200}>
-            <AppShell>{children}</AppShell>
-          </TooltipProvider>
+          <RoleScopeProvider>
+            <TooltipProvider delayDuration={200}>
+              <AppShell>{children}</AppShell>
+            </TooltipProvider>
+          </RoleScopeProvider>
         </QueryProvider>
       </body>
     </html>

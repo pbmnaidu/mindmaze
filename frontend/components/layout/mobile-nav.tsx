@@ -14,6 +14,7 @@ import {
 import { APP_NAME, APP_SUBTITLE } from "@/lib/constants/navigation";
 import { NavLinks } from "./nav-links";
 import { OversightNote } from "./oversight-note";
+import { RoleSelector } from "./role-selector";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -30,6 +31,7 @@ export function MobileNav() {
           <SheetDescription className="text-xs">{APP_SUBTITLE}</SheetDescription>
         </SheetHeader>
         <NavLinks compact onNavigate={() => setOpen(false)} />
+        <RoleSelector compact onComplete={() => setOpen(false)} />
         <div className="mt-auto">
           <OversightNote />
         </div>

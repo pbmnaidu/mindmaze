@@ -10,6 +10,7 @@ export interface QueueFilterState {
   constituency: string;
   category: string;
   severity: string;
+  completion_status: "" | "completed" | "not_completed";
   page: number;
 }
 
@@ -19,6 +20,7 @@ export const EMPTY_FILTERS: QueueFilterState = {
   constituency: "",
   category: "",
   severity: "",
+  completion_status: "",
   page: 1,
 };
 
@@ -39,6 +41,7 @@ export function useQueueFilters(pageSize: number) {
       constituency: searchParams.get("constituency") ?? "",
       category: searchParams.get("category") ?? "",
       severity: searchParams.get("severity") ?? "",
+      completion_status: (searchParams.get("completion_status") as QueueFilterState["completion_status"]) ?? "",
       page: Number.isFinite(page) && page > 0 ? page : 1,
     };
   }, [searchParams]);
@@ -70,13 +73,14 @@ export function useQueueFilters(pageSize: number) {
       constituency: filters.constituency || undefined,
       category: filters.category || undefined,
       severity: filters.severity || undefined,
+      completion_status: filters.completion_status || undefined,
       page: filters.page,
       limit: pageSize,
     }),
     [filters, pageSize],
   );
 
-  const activeCount = [filters.search, filters.state, filters.constituency, filters.category, filters.severity].filter(Boolean).length;
+  const activeCount = [filters.search, filters.state, filters.constituency, filters.category, filters.severity, filters.completion_status].filter(Boolean).length;
 
   return { filters, queryParams, apply, reset, activeCount };
 }

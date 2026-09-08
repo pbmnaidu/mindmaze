@@ -7,6 +7,7 @@ import type {
   NationalOverviewResponse,
   WorkRecord,
 } from "@/lib/types";
+import type { ScopeParams } from "./dashboard";
 
 /**
  * The backend has no dedicated aggregation endpoint for analytics. Analytics
@@ -24,11 +25,11 @@ export interface AnalyticsSample {
   duplicatesTotal: number;
 }
 
-export async function fetchAnalyticsSample(): Promise<ApiResult<AnalyticsSample>> {
+export async function fetchAnalyticsSample(scope: ScopeParams): Promise<ApiResult<AnalyticsSample>> {
   const [overview, queue, duplicates] = await Promise.all([
-    fetchOverview(),
-    fetchRiskQueue({ limit: ANALYTICS_SAMPLE_SIZE, page: 1 }),
-    fetchDuplicateCandidates({ limit: ANALYTICS_SAMPLE_SIZE, page: 1 }),
+    fetchOverview(scope),
+    fetchRiskQueue({ ...scope, limit: ANALYTICS_SAMPLE_SIZE, page: 1 }),
+    fetchDuplicateCandidates({ ...scope, limit: ANALYTICS_SAMPLE_SIZE, page: 1 }),
   ]);
 
   const source =

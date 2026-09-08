@@ -81,6 +81,47 @@ def clean_record_for_json(record):
             clean[k] = v
     return clean
 
+
+VALID_ROLES = {"national", "state", "constituency"}
+
+
+def _normalise(value):
+    return " ".join(str(value or "").strip().split()).casefold()
+
+
+def _matches(series, value):
+    """Exact, case-insensitive matching without changing stored display labels."""
+    target = _normalise(value)
+    if not target:
+        return pd.Series(True, index=series.index)
+    return series.fillna("").map(_normalise) == target
+
+
+def _validate_scope(role, state, constituency):
+    role = (role or "national").strip().lower()
+    if role not in VALID_ROLES:
+        raise HTTPException(status_code=422, detail="role must be national, state, or constituency.")
+    if role == "state" and not str(state or "").strip():
+        raise HTTPException(status_code=422, detail="A state is required for State Master monitoring.")
+    if role == "constituency" and (not str(state or "").strip() or not str(constituency or "").strip()):
+        raise HTTPException(status_code=422, detail="State and constituency are required for Constituency Master monitoring.")
+    return role
+
+
+def _scope_master(master, role="national", state=None, constituency=None):
+    """Apply the monitoring hierarchy after existing risk calculations have run."""
+    role = _validate_scope(role, state, constituency)
+    scoped = master
+    if role in {"state", "constituency"}:
+        scoped = scoped[_matches(scoped["state"], state)]
+    if role == "constituency":
+        scoped = scoped[_matches(scoped["constituency"], constituency)]
+    return scoped.copy(), role
+
+
+def _completion_mask(df):
+    return df["completion_date"].notna() if "completion_date" in df else pd.Series(False, index=df.index)
+
 @app.get("/api/health")
 def health_check():
     data = get_data()
@@ -90,27 +131,35 @@ def health_check():
     }
 
 @app.get("/api/overview")
-def get_national_overview():
+def get_overview(
+    role: str = "national",
+    state: str = None,
+    constituency: str = None,
+):
     data = get_data()
-    master = data["master"]
+    master, role = _scope_master(data["master"], role, state, constituency)
     t1 = data["t1"]
     
-    total_allocation = float(t1["allocated_amount"].sum()) if len(t1) > 0 else 0.0
+    # Allocation data is national-only and cannot safely be apportioned to a scope.
+    total_allocation = float(t1["allocated_amount"].sum()) if role == "national" and len(t1) > 0 else 0.0
     total_sanctioned = float(master["sanction_amount"].fillna(0).sum())
     total_disbursed = float(master["effective_expenditure"].fillna(0).sum())
     
     total_works = len(master)
-    completed_works = int(master["completion_date"].notnull().sum())
+    completed_works = int(_completion_mask(master).sum())
     
     risk_counts = master["overall_risk_level"].value_counts().to_dict()
     
-    # State-level aggregation
-    state_agg = master.groupby("state").agg(
+    # The role determines the aggregation level: state → constituency → work.
+    group_field = "state" if role == "national" else ("constituency" if role == "state" else "work_id")
+    ranking_label = "State" if role == "national" else ("Constituency" if role == "state" else "Work")
+    state_agg = master.groupby(group_field).agg(
         total_works=("work_id", "count"),
         total_sanctioned=("sanction_amount", "sum"),
         total_disbursed=("effective_expenditure", "sum"),
         high_risk_works=("overall_risk_level", lambda x: (x.isin(["HIGH", "CRITICAL"])).sum())
-    ).reset_index().sort_values("high_risk_works", ascending=False)
+    ).reset_index().sort_values(["high_risk_works", "total_works"], ascending=False)
+    state_agg = state_agg.rename(columns={group_field: "state"})
     
     state_list = [clean_record_for_json(r) for r in state_agg.to_dict(orient="records")]
     
@@ -140,30 +189,44 @@ def get_national_overview():
             "CRITICAL": int(risk_counts.get("CRITICAL", 0))
         },
         "top_states": state_list[:10],
-        "category_distribution": cat_list[:8]
+        "category_distribution": cat_list[:8],
+        "scope": {"role": role, "state": state if role != "national" else None, "constituency": constituency if role == "constituency" else None},
+        "ranking_label": ranking_label,
     }
 
 @app.get("/api/risk-monitor")
 def get_risk_monitor_queue(
+    role: str = "national",
     state: str = None,
     constituency: str = None,
     category: str = None,
     severity: str = None,
+    completion_status: str = None,
     search: str = None,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200)
 ):
     data = get_data()
-    df = data["master"].copy()
+    df, _ = _scope_master(data["master"], role, state, constituency)
     
-    if state and state.strip():
+    # National users may optionally narrow the results; role scope can never be escaped.
+    if role.strip().lower() == "national" and state and state.strip():
         df = df[df["state"].str.upper() == state.strip().upper()]
-    if constituency and constituency.strip():
+    if role.strip().lower() == "national" and constituency and constituency.strip():
         df = df[df["constituency"].str.upper() == constituency.strip().upper()]
     if category and category.strip():
         df = df[df["work_category"].str.lower() == category.strip().lower()]
     if severity and severity.strip():
         df = df[df["overall_risk_level"].str.upper() == severity.strip().upper()]
+    if completion_status and completion_status.strip():
+        status = completion_status.strip().lower()
+        completed = _completion_mask(df)
+        if status == "completed":
+            df = df[completed]
+        elif status in {"not_completed", "not completed", "ongoing"}:
+            df = df[~completed]
+        else:
+            raise HTTPException(status_code=422, detail="completion_status must be completed or not_completed.")
     if search and search.strip():
         q = search.strip().lower()
         df = df[
@@ -260,15 +323,27 @@ def _fetch_work_detail_internal(target_work_id: str):
     }
 
 @app.get("/api/work-detail")
-def get_work_detail_by_query(work_id: str = Query(...)):
-    return _fetch_work_detail_internal(work_id)
+def get_work_detail_by_query(work_id: str = Query(...), role: str = "national", state: str = None, constituency: str = None):
+    result = _fetch_work_detail_internal(work_id)
+    scoped, scoped_role = _scope_master(get_data()["master"], role, state, constituency)
+    if not _matches(scoped["work_id"], result["work"]["work_id"]).any():
+        raise HTTPException(status_code=404, detail="Work record is outside the active monitoring scope.")
+    if scoped_role != "national":
+        candidates = result["candidate_duplicates"]
+        if scoped_role == "state":
+            candidates = [pair for pair in candidates if _normalise(pair.get("state")) == _normalise(state)]
+        else:
+            candidates = [pair for pair in candidates if _normalise(pair.get("state")) == _normalise(state) and _normalise(pair.get("constituency")) == _normalise(constituency)]
+        result["candidate_duplicates"] = candidates
+    return result
 
 @app.get("/api/work-detail/{work_id:path}")
-def get_work_detail_by_path(work_id: str):
-    return _fetch_work_detail_internal(work_id)
+def get_work_detail_by_path(work_id: str, role: str = "national", state: str = None, constituency: str = None):
+    return get_work_detail_by_query(work_id, role, state, constituency)
 
 @app.get("/api/duplicate-candidates")
 def get_duplicate_candidates(
+    role: str = "national",
     state: str = None,
     constituency: str = None,
     min_similarity: float = Query(70.0, ge=50.0, le=100.0),
@@ -283,9 +358,10 @@ def get_duplicate_candidates(
         
     dups = dups[dups["similarity_score"] >= min_similarity]
     
-    if state and state.strip():
+    role = _validate_scope(role, state, constituency)
+    if role in {"state", "constituency"} and state and state.strip():
         dups = dups[dups["state"].str.upper() == state.strip().upper()]
-    if constituency and constituency.strip():
+    if role == "constituency" and constituency and constituency.strip():
         dups = dups[dups["constituency"].str.upper() == constituency.strip().upper()]
         
     total_records = len(dups)
@@ -305,16 +381,23 @@ def get_duplicate_candidates(
     }
 
 @app.get("/api/filters")
-def get_filter_options():
+def get_filter_options(role: str = "national", state: str = None, constituency: str = None):
     data = get_data()
-    master = data["master"]
+    master, role = _scope_master(data["master"], role, state, constituency)
     
     states = sorted([str(s) for s in master["state"].dropna().unique() if str(s).strip() != ""])
     categories = sorted([str(c) for c in master["work_category"].dropna().unique() if str(c).strip() != ""])
     severities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
     
+    constituencies_by_state = {
+        str(s): sorted([str(c) for c in group["constituency"].dropna().unique() if str(c).strip() != ""])
+        for s, group in master.groupby("state")
+        if str(s).strip()
+    }
     return {
         "states": states,
+        "constituencies": sorted([str(c) for c in master["constituency"].dropna().unique() if str(c).strip() != ""]),
+        "constituenciesByState": constituencies_by_state,
         "categories": categories,
         "severities": severities
     }

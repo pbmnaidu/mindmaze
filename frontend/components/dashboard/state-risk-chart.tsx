@@ -6,7 +6,7 @@ import { AXIS_LINE, AXIS_STYLE, ChartEmpty, ChartTooltip, GRID_STROKE } from "@/
 import type { StateSummary } from "@/lib/types";
 import { formatNumber, toTitleCase } from "@/lib/utils/format";
 
-export function StateRiskChart({ states }: { states: StateSummary[] }) {
+export function StateRiskChart({ states, level = "State" }: { states: StateSummary[]; level?: string }) {
   const data = [...states]
     .sort((a, b) => b.high_risk_works - a.high_risk_works || b.total_works - a.total_works)
     .slice(0, 8)
@@ -18,13 +18,13 @@ export function StateRiskChart({ states }: { states: StateSummary[] }) {
 
   return (
     <ChartCard
-      question="Which states carry the most high-risk indicators?"
-      title="State-wise high-risk works"
-      description="Count of works flagged high or critical, for the states reported by the risk engine."
+      question={`Which ${level.toLowerCase()}s carry the most high-risk indicators?`}
+      title={`${level} risk ranking`}
+      description={`Count of works flagged high or critical, for the ${level.toLowerCase()}s reported by the risk engine.`}
       footer="Ranked by high-risk count. Hover a bar to see total works for scale."
     >
       {data.length === 0 ? (
-        <ChartEmpty message="No state-wise data available." />
+        <ChartEmpty message={`No ${level.toLowerCase()} data available.`} />
       ) : (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">

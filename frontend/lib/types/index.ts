@@ -37,6 +37,7 @@ export interface NationalOverviewResponse {
   risk_distribution: RiskDistribution;
   top_states: StateSummary[];
   category_distribution?: CategorySummary[];
+  ranking_label?: string;
 }
 
 export interface ExpenditureTrip {
@@ -115,6 +116,8 @@ export interface PaginatedResponse<T> {
 
 export interface FilterOptions {
   states: string[];
+  constituencies?: string[];
+  constituenciesByState?: Record<string, string[]>;
   categories: string[];
   severities: string[];
 }
@@ -130,16 +133,19 @@ export interface HealthResponse {
 }
 
 export interface RiskQueueParams {
+  role?: "national" | "state" | "constituency";
   state?: string;
   constituency?: string;
   category?: string;
   severity?: string;
+  completion_status?: "completed" | "not_completed";
   search?: string;
   page?: number;
   limit?: number;
 }
 
 export interface DuplicateQueryParams {
+  role?: "national" | "state" | "constituency";
   state?: string;
   constituency?: string;
   min_similarity?: number;

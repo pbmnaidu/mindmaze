@@ -15,11 +15,11 @@ import { getPrimaryRiskFactor } from "@/lib/constants/risk";
 import type { WorkRecord } from "@/lib/types";
 import { toTitleCase } from "@/lib/utils/format";
 
-export function PrioritizedWorks({ works, isLoading }: { works: WorkRecord[] | undefined; isLoading: boolean }) {
+export function PrioritizedWorks({ works, isLoading, title = "Prioritized works" }: { works: WorkRecord[] | undefined; isLoading: boolean; title?: string }) {
   return (
     <section className="flex flex-col gap-3" aria-labelledby="prioritized-heading">
       <SectionHeading
-        title="Prioritized works"
+        title={title}
         description="Which works should be reviewed first? Ranked by composite risk score."
         actions={
           <Button asChild variant="outline" size="sm">

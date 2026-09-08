@@ -8,19 +8,23 @@ import { useQueueFilters } from "@/hooks/use-queue-filters";
 import { DEFAULT_PAGE_SIZE } from "@/lib/api/risk";
 import { FilterBar } from "./filter-bar";
 import { RiskTable } from "./risk-table";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
+import { MonitoringRequired } from "@/components/shared/monitoring-required";
 
 export function RiskMonitorView() {
+  const { apiScope, role, label } = useRoleScope();
   const { filters, queryParams, apply, reset, activeCount } = useQueueFilters(DEFAULT_PAGE_SIZE);
-  const options = useFilterOptions();
-  const queue = useRiskMonitor(queryParams);
+  const options = useFilterOptions(apiScope ?? {});
+  const queue = useRiskMonitor({ ...queryParams, ...(apiScope ?? {}) });
 
   const data = queue.data?.data;
 
+  if (!apiScope) return <MonitoringRequired />;
   return (
     <>
       <PageHeader
         title="Risk Monitor"
-        description="Prioritized works requiring further review based on multiple risk indicators. Filtering, sorting, and pagination are performed by the risk intelligence service."
+        description={`Prioritized works requiring further review within ${label}. Filtering, sorting, and pagination are performed by the risk intelligence service.`}
       />
 
       <DataSourceNotice source={queue.data?.source} />
@@ -31,6 +35,7 @@ export function RiskMonitorView() {
         onApply={apply}
         onReset={reset}
         activeCount={activeCount}
+        lockedScope={role === "NATIONAL" ? undefined : { state: apiScope.state, constituency: apiScope.constituency }}
       />
 
       {queue.isError ? (

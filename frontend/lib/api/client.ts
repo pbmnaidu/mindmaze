@@ -8,7 +8,9 @@ export const API_BASE_URL =
  * unreachable AND the app is not a production build (or the fallback is explicitly
  * opted into). Production always reflects the real API, including its failures.
  */
-export const DEV_FALLBACK_ENABLED = true;
+/** Sample fixtures are opt-in for isolated UI development and never a default data source. */
+export const DEV_FALLBACK_ENABLED =
+  process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_DEV_SAMPLE_DATA === "true";
 
 export class ApiError extends Error {
   status?: number;

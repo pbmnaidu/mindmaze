@@ -1,8 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { proxyBackendGet } from "@/lib/api/backend-proxy";
 
-export async function GET() {
-  return NextResponse.json({
-    status: "healthy",
-    total_projects_loaded: 79068
-  });
+export async function GET(request: NextRequest) {
+  return proxyBackendGet(request, "health");
 }

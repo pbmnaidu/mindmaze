@@ -16,11 +16,14 @@ import { useFilterOptions } from "@/hooks/use-risk-monitor";
 import { DUPLICATE_PAGE_SIZE } from "@/lib/api/duplicates";
 import { formatNumber, toTitleCase } from "@/lib/utils/format";
 import { SimilarityCard } from "./similarity-card";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
+import { MonitoringRequired } from "@/components/shared/monitoring-required";
 
 const ALL = "__all__";
 const SIMILARITY_OPTIONS = [70, 80, 90, 95];
 
 export function DuplicateInspectorView() {
+  const { apiScope, role, label } = useRoleScope();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -43,21 +46,23 @@ export function DuplicateInspectorView() {
   );
 
   const params = useMemo(
-    () => ({ state: state || undefined, min_similarity: minSimilarity, page, limit: DUPLICATE_PAGE_SIZE }),
-    [state, minSimilarity, page],
+    () => ({ ...(apiScope ?? {}), state: (apiScope?.state ?? state) || undefined, constituency: apiScope?.constituency, min_similarity: minSimilarity, page, limit: DUPLICATE_PAGE_SIZE }),
+    [apiScope, state, minSimilarity, page],
   );
 
-  const options = useFilterOptions();
+  const options = useFilterOptions(apiScope ?? {});
   const duplicates = useDuplicates(params);
   const data = duplicates.data?.data;
   const totalPages = data?.total_pages ?? Math.max(1, Math.ceil((data?.total ?? 0) / DUPLICATE_PAGE_SIZE));
   const hasFilters = Boolean(state || minSimilarity);
 
+  if (!apiScope) return <MonitoringRequired />;
+  const stateLocked = role !== "NATIONAL";
   return (
     <>
       <PageHeader
         title="Duplicate Inspector"
-        description="Side-by-side comparison of work descriptions identified as potentially similar. Similarity is computed with TF-IDF and cosine similarity; a high score indicates a candidate for verification, not a confirmed duplicate."
+        description={`Potentially similar works within ${label}. Similarity is computed with TF-IDF and cosine similarity; a high score indicates a candidate for verification, not a confirmed duplicate.`}
       />
 
       <DataSourceNotice source={duplicates.data?.source} />
@@ -65,7 +70,7 @@ export function DuplicateInspectorView() {
       <div className="flex flex-wrap items-end gap-3 rounded-md border bg-card p-3">
         <div className="flex min-w-44 flex-col gap-1.5">
           <Label htmlFor="dup-state" className="text-xs">State</Label>
-          <Select value={state || ALL} onValueChange={(v) => update({ state: v === ALL ? "" : v })}>
+          <Select value={(apiScope.state ?? state) || ALL} disabled={stateLocked} onValueChange={(v) => update({ state: v === ALL ? "" : v })}>
             <SelectTrigger id="dup-state" className="h-9 w-full text-xs" size="sm">
               <SelectValue placeholder="All states" />
             </SelectTrigger>

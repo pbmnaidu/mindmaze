@@ -1,12 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="flex min-h-svh flex-col">
-      <Header />
+      <Header onToggleSidebar={() => setCollapsed((value) => !value)} />
       <div className="flex flex-1">
-        <Sidebar />
+        <Sidebar collapsed={collapsed} />
         <main
           id="main-content"
           className="flex min-w-0 flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8"

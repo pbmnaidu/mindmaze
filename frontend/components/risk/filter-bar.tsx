@@ -21,6 +21,7 @@ interface FilterBarProps {
   onReset: () => void;
   activeCount: number;
   showSeverity?: boolean;
+  lockedScope?: { state?: string; constituency?: string };
 }
 
 type Draft = Omit<QueueFilterState, "page">;
@@ -30,7 +31,7 @@ function toDraft(filters: QueueFilterState): Draft {
   return rest;
 }
 
-export function FilterBar({ filters, options, onApply, onReset, activeCount, showSeverity = true }: FilterBarProps) {
+export function FilterBar({ filters, options, onApply, onReset, activeCount, showSeverity = true, lockedScope }: FilterBarProps) {
   const [draft, setDraft] = useState<Draft>(() => toDraft(filters));
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -62,7 +63,7 @@ export function FilterBar({ filters, options, onApply, onReset, activeCount, sho
 
       <div className="flex flex-col gap-1.5 lg:w-44">
         <Label htmlFor="filter-state" className="text-xs">State</Label>
-        <Select value={draft.state || ALL} onValueChange={(v) => setDraft((d) => ({ ...d, state: v === ALL ? "" : v }))}>
+        <Select value={(lockedScope?.state ?? draft.state) || ALL} disabled={Boolean(lockedScope?.state)} onValueChange={(v) => setDraft((d) => ({ ...d, state: v === ALL ? "" : v }))}>
           <SelectTrigger id="filter-state" className="h-9 w-full text-xs" size="sm">
             <SelectValue placeholder="All states" />
           </SelectTrigger>
@@ -79,11 +80,20 @@ export function FilterBar({ filters, options, onApply, onReset, activeCount, sho
         <Label htmlFor="filter-constituency" className="text-xs">Constituency</Label>
         <Input
           id="filter-constituency"
-          value={draft.constituency}
+          value={lockedScope?.constituency ?? draft.constituency}
+          disabled={Boolean(lockedScope?.constituency)}
           onChange={(e) => setDraft((d) => ({ ...d, constituency: e.target.value }))}
           placeholder="Any constituency"
           className="h-9 text-xs"
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5 lg:w-40">
+        <Label htmlFor="filter-completion" className="text-xs">Status</Label>
+        <Select value={draft.completion_status || ALL} onValueChange={(v) => setDraft((d) => ({ ...d, completion_status: v === ALL ? "" : v as Draft["completion_status"] }))}>
+          <SelectTrigger id="filter-completion" className="h-9 w-full text-xs" size="sm"><SelectValue placeholder="All statuses" /></SelectTrigger>
+          <SelectContent><SelectItem value={ALL}>All</SelectItem><SelectItem value="completed">Completed</SelectItem><SelectItem value="not_completed">Not Completed</SelectItem></SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1.5 lg:w-48">

@@ -14,16 +14,20 @@ import { RiskSummary, RiskSummarySkeleton } from "./risk-summary";
 import { RiskFactorList } from "./risk-factor-list";
 import { ProjectInfoGrid } from "./project-info-grid";
 import { SimilarWorks } from "./similar-works";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
+import { MonitoringRequired } from "@/components/shared/monitoring-required";
 
 export function ProjectDetailView({ workId }: { workId: string }) {
+  const { apiScope, label } = useRoleScope();
   const project = useProject(workId);
 
   const notFound = project.isError && project.error instanceof ApiError && project.error.status === 404;
 
+  if (!apiScope) return <MonitoringRequired />;
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label: workId }]} />
+        <Breadcrumbs items={[{ label: "Projects", href: "/projects" }, { label }, { label: workId }]} />
         <Button asChild variant="ghost" size="sm" className="h-8">
           <Link href="/risk-monitor">
             <ArrowLeft className="size-4" aria-hidden="true" />

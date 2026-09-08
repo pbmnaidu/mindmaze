@@ -2,9 +2,10 @@ import { AlertOctagon, AlertTriangle, ClipboardList, Layers } from "lucide-react
 import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card";
 import { RiskBadge } from "@/components/risk/risk-badge";
 import type { NationalOverviewResponse } from "@/lib/types";
+import type { MonitoringRole } from "@/components/providers/role-scope-provider";
 import { formatInr, formatNumber } from "@/lib/utils/format";
 
-export function KpiRow({ overview }: { overview: NationalOverviewResponse }) {
+export function KpiRow({ overview, role = "NATIONAL" }: { overview: NationalOverviewResponse; role?: MonitoringRole }) {
   const { summary, risk_distribution } = overview;
   const underReview = risk_distribution.MEDIUM + risk_distribution.HIGH + risk_distribution.CRITICAL;
 
@@ -16,12 +17,11 @@ export function KpiRow({ overview }: { overview: NationalOverviewResponse }) {
         hint={`${formatNumber(summary.completed_works)} completed · ${formatInr(summary.total_sanctioned_amount)} sanctioned`}
         icon={<Layers />}
       />
-      <StatCard
-        label="Works under review"
-        value={formatNumber(underReview)}
-        hint="Medium, high, and critical risk indicators combined"
-        icon={<ClipboardList />}
-      />
+      {role === "CONSTITUENCY" ? (
+        <StatCard label="Active works" value={formatNumber(Math.max(0, summary.total_works - summary.completed_works))} hint="Works without a recorded completion date" icon={<ClipboardList />} />
+      ) : (
+        <StatCard label="Works under review" value={formatNumber(underReview)} hint="Medium, high, and critical risk indicators combined" icon={<ClipboardList />} />
+      )}
       <StatCard
         label="High risk works"
         value={formatNumber(summary.high_risk_works)}
@@ -29,13 +29,11 @@ export function KpiRow({ overview }: { overview: NationalOverviewResponse }) {
         icon={<AlertTriangle />}
         accent={<RiskBadge level="HIGH" showIcon={false} />}
       />
-      <StatCard
-        label="Critical risk works"
-        value={formatNumber(summary.critical_works)}
-        hint="Investigation priority"
-        icon={<AlertOctagon />}
-        accent={<RiskBadge level="CRITICAL" showIcon={false} />}
-      />
+      {role === "CONSTITUENCY" ? (
+        <StatCard label="Completed works" value={formatNumber(summary.completed_works)} hint="Completion date recorded" icon={<AlertOctagon />} />
+      ) : (
+        <StatCard label="Critical risk works" value={formatNumber(summary.critical_works)} hint="Investigation priority" icon={<AlertOctagon />} accent={<RiskBadge level="CRITICAL" showIcon={false} />} />
+      )}
     </div>
   );
 }

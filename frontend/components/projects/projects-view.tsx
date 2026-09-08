@@ -16,23 +16,27 @@ import { useProjects } from "@/hooks/use-projects";
 import { useQueueFilters } from "@/hooks/use-queue-filters";
 import { formatNumber } from "@/lib/utils/format";
 import { ProjectCard } from "./project-card";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
+import { MonitoringRequired } from "@/components/shared/monitoring-required";
 
 const PAGE_SIZE = 24;
 
 export function ProjectsView() {
+  const { apiScope, role, label } = useRoleScope();
   const { filters, queryParams, apply, reset, activeCount } = useQueueFilters(PAGE_SIZE);
-  const options = useFilterOptions();
-  const projects = useProjects(queryParams);
+  const options = useFilterOptions(apiScope ?? {});
+  const projects = useProjects({ ...queryParams, ...(apiScope ?? {}) });
   const [layout, setLayout] = useState<"cards" | "table">("cards");
 
   const data = projects.data?.data;
   const totalPages = data?.total_pages ?? Math.max(1, Math.ceil((data?.total ?? 0) / PAGE_SIZE));
 
+  if (!apiScope) return <MonitoringRequired />;
   return (
     <>
       <PageHeader
         title="Projects"
-        description="Searchable directory of MPLADS works with location, financial, and risk metadata. Open any work for its full investigation view."
+        description={`Searchable directory of MPLADS works within ${label}. Open any work for its full investigation view.`}
         actions={
           <div role="group" aria-label="Layout" className="flex rounded-md border bg-card p-0.5">
             <Button variant={layout === "cards" ? "secondary" : "ghost"} size="sm" className="h-7 px-2" onClick={() => setLayout("cards")} aria-pressed={layout === "cards"}>
@@ -47,7 +51,7 @@ export function ProjectsView() {
 
       <DataSourceNotice source={projects.data?.source} />
 
-      <FilterBar filters={filters} options={options.data?.data} onApply={apply} onReset={reset} activeCount={activeCount} />
+      <FilterBar filters={filters} options={options.data?.data} onApply={apply} onReset={reset} activeCount={activeCount} lockedScope={role === "NATIONAL" ? undefined : { state: apiScope.state, constituency: apiScope.constituency }} />
 
       {projects.isError ? (
         <ErrorState title="Unable to load projects." onRetry={() => projects.refetch()} retrying={projects.isFetching} />

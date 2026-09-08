@@ -14,16 +14,21 @@ import { VendorSection } from "./vendor-section";
 import { PaymentSection } from "./payment-section";
 import { DuplicateSection } from "./duplicate-section";
 import { ComplianceSection } from "./compliance-section";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
+import { MonitoringRequired } from "@/components/shared/monitoring-required";
 
 export function AnalyticsView() {
+  const { apiScope, role, label } = useRoleScope();
   const analytics = useAnalytics();
   const data = analytics.data?.data;
 
+  if (!apiScope) return <MonitoringRequired />;
+  const level = role === "NATIONAL" ? "State" : role === "STATE" ? "Constituency" : "Work";
   return (
     <>
       <PageHeader
         title="Analytics"
-        description="Pattern analysis across financial, vendor, payment, duplicate, and compliance indicators. Each view answers an administrative question and states the data it is based on."
+        description={`${level}-level pattern analysis within ${label}, across financial, vendor, payment, duplicate, and compliance indicators.`}
       />
 
       <DataSourceNotice source={analytics.data?.source} />
@@ -33,7 +38,7 @@ export function AnalyticsView() {
           <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <p>
             <span className="font-medium text-foreground">Basis of analysis.</span> Distribution and state/category
-            figures come from national aggregates over {formatNumber(data.overview.summary.total_works)} works. Record-level
+            figures come from the active monitoring scope over {formatNumber(data.overview.summary.total_works)} works. Record-level
             patterns (peer ratios, vendor shares, disbursal, compliance) are computed from the{" "}
             <span className="font-medium text-foreground">top {formatNumber(Math.min(ANALYTICS_SAMPLE_SIZE, data.works.length))} prioritized works</span>{" "}
             returned by the risk engine, not the full dataset.

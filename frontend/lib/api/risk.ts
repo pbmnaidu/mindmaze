@@ -36,10 +36,12 @@ function sampleRiskQueue(params: RiskQueueParams): PaginatedResponse<WorkRecord>
 /** Server-side filtered + paginated queue. The backend returns works ranked by composite risk. */
 export function fetchRiskQueue(params: RiskQueueParams) {
   const query = buildQuery({
+    role: params.role,
     state: params.state,
     constituency: params.constituency,
     category: params.category,
     severity: params.severity,
+    completion_status: params.completion_status,
     search: params.search,
     page: params.page,
     limit: params.limit ?? DEFAULT_PAGE_SIZE,
@@ -47,6 +49,6 @@ export function fetchRiskQueue(params: RiskQueueParams) {
   return apiGet<PaginatedResponse<WorkRecord>>(`/risk-monitor${query}`, () => sampleRiskQueue(params));
 }
 
-export function fetchFilterOptions() {
-  return apiGet<FilterOptions>("/filters", () => SAMPLE_FILTERS);
+export function fetchFilterOptions(scope: Partial<RiskQueueParams> = {}) {
+  return apiGet<FilterOptions>(`/filters${buildQuery({ role: scope.role, state: scope.state, constituency: scope.constituency })}`, () => SAMPLE_FILTERS);
 }

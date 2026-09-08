@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchRiskQueue } from "@/lib/api/risk";
 import { fetchWorkDetail } from "@/lib/api/projects";
 import type { RiskQueueParams } from "@/lib/types";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
 
 /** The work directory is served by the same ranked, filterable endpoint as the queue. */
 export function useProjects(params: RiskQueueParams) {
@@ -15,9 +16,10 @@ export function useProjects(params: RiskQueueParams) {
 }
 
 export function useProject(workId: string) {
+  const { apiScope } = useRoleScope();
   return useQuery({
-    queryKey: ["work-detail", workId],
-    queryFn: () => fetchWorkDetail(workId),
-    enabled: Boolean(workId),
+    queryKey: ["work-detail", workId, apiScope],
+    queryFn: () => fetchWorkDetail(workId, apiScope!),
+    enabled: Boolean(workId && apiScope),
   });
 }

@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { SAMPLE_OVERVIEW } from "@/lib/api/dev-sample-data";
+import { NextRequest } from "next/server";
+import { proxyBackendGet } from "@/lib/api/backend-proxy";
 
-export async function GET() {
-  return NextResponse.json(SAMPLE_OVERVIEW);
+export async function GET(request: NextRequest) {
+  return proxyBackendGet(request, "overview");
 }

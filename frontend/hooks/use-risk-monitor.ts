@@ -12,10 +12,10 @@ export function useRiskMonitor(params: RiskQueueParams) {
   });
 }
 
-export function useFilterOptions() {
+export function useFilterOptions(scope: Partial<RiskQueueParams> = {}) {
   return useQuery({
-    queryKey: ["filter-options"],
-    queryFn: fetchFilterOptions,
+    queryKey: ["filter-options", scope],
+    queryFn: () => fetchFilterOptions(scope),
     staleTime: 60 * 60 * 1000,
   });
 }

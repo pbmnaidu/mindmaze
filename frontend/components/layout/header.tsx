@@ -3,8 +3,10 @@ import { APP_NAME, APP_SUBTITLE } from "@/lib/constants/navigation";
 import { MobileNav } from "./mobile-nav";
 import { CurrentSection } from "./current-section";
 import { BrandMark } from "./brand-mark";
+import { PanelLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function Header() {
+export function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-card">
       <a
@@ -15,6 +17,9 @@ export function Header() {
       </a>
       <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <MobileNav />
+        <Button variant="ghost" size="icon-sm" className="hidden md:inline-flex" aria-label="Collapse or expand sidebar" onClick={onToggleSidebar}>
+          <PanelLeft className="size-4" />
+        </Button>
         <Link href="/" className="flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-ring">
           <BrandMark />
           <div className="flex flex-col leading-none">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS, getNavItemForPath } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils";
+import { useRoleScope } from "@/components/providers/role-scope-provider";
 
 export function NavLinks({
   compact = false,
@@ -13,12 +14,13 @@ export function NavLinks({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const { role } = useRoleScope();
   const active = getNavItemForPath(pathname);
 
   return (
     <nav aria-label="Primary">
       <ul className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => role || item.href === "/").map((item) => {
           const isActive = active?.href === item.href;
           const Icon = item.icon;
           return (
@@ -35,12 +37,12 @@ export function NavLinks({
                 )}
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
-                <span className="flex flex-col">
+                {!compact && <span className="flex flex-col">
                   <span>{item.label}</span>
                   {!compact && (
                     <span className="text-[11px] font-normal text-muted-foreground">{item.description}</span>
                   )}
-                </span>
+                </span>}
               </Link>
             </li>
           );

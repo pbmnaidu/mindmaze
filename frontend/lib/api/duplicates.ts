@@ -13,6 +13,7 @@ function sampleDuplicates(params: DuplicateQueryParams): PaginatedResponse<Candi
 
 export function fetchDuplicateCandidates(params: DuplicateQueryParams) {
   const query = buildQuery({
+    role: params.role,
     state: params.state,
     constituency: params.constituency,
     min_similarity: params.min_similarity,
