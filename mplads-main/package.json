@@ -1,0 +1,13 @@
+{
+  "name": "mplads-ai-platform",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "backend": "python -m uvicorn src.backend.app:app --host 127.0.0.1 --port 8000 --reload",
+    "frontend": "npm --prefix frontend run dev",
+    "frontend:install": "npm --prefix frontend install",
+    "frontend:build": "npm --prefix frontend run build",
+    "pipeline": "python src/run_pipeline.py"
+  }
+}
