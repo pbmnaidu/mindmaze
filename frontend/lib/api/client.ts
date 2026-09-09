@@ -5,7 +5,9 @@ import type { ApiResult } from "@/lib/types";
  * proxy to FastAPI server-side, which avoids exposing deployment topology and
  * prevents browser CORS from making the dashboard fall back to sample data.
  */
-export const API_BASE_URL = "/api";
+// In production, call Render directly instead of routing large responses
+// through a Vercel serverless proxy. Local development keeps same-origin API routes.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 /**
  * Development-only fallback. Sample data is only ever served when the backend is
