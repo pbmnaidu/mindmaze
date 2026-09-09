@@ -49,49 +49,22 @@ _DATA_CACHE = {}
 
 def get_data():
     if "master" not in _DATA_CACHE:
-        master_p = os.path.join(FEATURES_DIR, "master_project_risk_scores.parquet")
+        compact_master = os.path.join(FEATURES_DIR, "master_api.parquet")
+        master_p = compact_master if os.path.exists(compact_master) else os.path.join(FEATURES_DIR, "master_project_risk_scores.parquet")
         if not os.path.exists(master_p):
             raise RuntimeError(f"Master database file missing at {master_p}")
         df = pd.read_parquet(master_p)
         # Convert NaN values to None for clean JSON serialization
         _DATA_CACHE["master"] = df
         
-    if "duplicates" not in _DATA_CACHE:
-        dup_p = os.path.join(FEATURES_DIR, "duplicate_work_candidates.parquet")
-        if os.path.exists(dup_p):
-            _DATA_CACHE["duplicates"] = pd.read_parquet(dup_p)
-        else:
-            _DATA_CACHE["duplicates"] = pd.DataFrame()
-            
-    if "t1" not in _DATA_CACHE:
-        t1_p = os.path.join(PROCESSED_DIR, "t1_allocated_limits.parquet")
-        if os.path.exists(t1_p):
-            _DATA_CACHE["t1"] = pd.read_parquet(t1_p)
-        else:
-            _DATA_CACHE["t1"] = pd.DataFrame()
-
-    if "t3" not in _DATA_CACHE:
-        t3_p = os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet")
-        if os.path.exists(t3_p):
-            _DATA_CACHE["t3"] = pd.read_parquet(t3_p)
-        else:
-            _DATA_CACHE["t3"] = pd.DataFrame()
-
-    if "t5" not in _DATA_CACHE:
-        t5_p = os.path.join(PROCESSED_DIR, "t5_works_completed.parquet")
-        if os.path.exists(t5_p):
-            _DATA_CACHE["t5"] = pd.read_parquet(t5_p)
-        else:
-            _DATA_CACHE["t5"] = pd.DataFrame()
-            
-    if "t6" not in _DATA_CACHE:
-        t6_p = os.path.join(PROCESSED_DIR, "t6_expenditure.parquet")
-        if os.path.exists(t6_p):
-            _DATA_CACHE["t6"] = pd.read_parquet(t6_p)
-        else:
-            _DATA_CACHE["t6"] = pd.DataFrame()
-            
     return _DATA_CACHE
+
+
+def get_optional_data(name, path, columns=None):
+    """Load large supporting files only when an endpoint actually needs them."""
+    if name not in _DATA_CACHE:
+        _DATA_CACHE[name] = pd.read_parquet(path, columns=columns) if os.path.exists(path) else pd.DataFrame()
+    return _DATA_CACHE[name]
 
 def clean_record_for_json(record):
     """Helper to convert numpy types and NaNs to standard JSON types."""
@@ -194,11 +167,13 @@ def get_overview(
     data = get_data()
     master, role = _scope_master(data["master"], role, state, constituency)
     
-    # Filter T1 (Allocated) and T3 (Recommended) by scope
-    t1_scoped = _filter_df_by_scope(data.get("t1"), state, constituency)
-    t3_scoped = _filter_df_by_scope(data.get("t3"), state, constituency)
+    # Load supporting datasets only for the overview endpoint.
+    t1 = get_optional_data("t1", os.path.join(PROCESSED_DIR, "t1_allocated_limits.parquet"))
+    t3 = get_optional_data("t3", os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet"))
+    t1_scoped = _filter_df_by_scope(t1, state, constituency)
+    t3_scoped = _filter_df_by_scope(t3, state, constituency)
 
-    total_allocation = float(t1_scoped["allocated_amount"].fillna(0).sum()) if len(t1_scoped) > 0 and "allocated_amount" in t1_scoped else (float(data["t1"]["allocated_amount"].sum()) if role == "national" and len(data.get("t1", [])) > 0 else 0.0)
+    total_allocation = float(t1_scoped["allocated_amount"].fillna(0).sum()) if len(t1_scoped) > 0 and "allocated_amount" in t1_scoped else 0.0
     total_recommended_works = len(t3_scoped)
     total_recommended_amount = float(t3_scoped["recommended_amount"].fillna(0).sum()) if len(t3_scoped) > 0 and "recommended_amount" in t3_scoped else 0.0
     
@@ -335,7 +310,7 @@ def _fetch_work_detail_internal(target_work_id: str):
         
     data = get_data()
     master = data["master"]
-    duplicates = data["duplicates"]
+    duplicates = get_optional_data("duplicates", os.path.join(FEATURES_DIR, "duplicate_work_candidates.parquet"))
     
     clean_id = target_work_id.strip()
     
@@ -361,7 +336,7 @@ def _fetch_work_detail_internal(target_work_id: str):
     work_record = clean_record_for_json(matches.iloc[0].to_dict())
     
     # Extract T6 Expenditure payment trips (releases to vendor)
-    t6 = data.get("t6", pd.DataFrame())
+    t6 = get_optional_data("t6", os.path.join(PROCESSED_DIR, "t6_expenditure.parquet"))
     expenditure_trips = []
     if len(t6) > 0 and "work_id" in t6.columns:
         t6_matches = t6[t6["work_id"] == found_id]
@@ -419,7 +394,7 @@ def get_duplicate_candidates(
     limit: int = Query(20, ge=1, le=100)
 ):
     data = get_data()
-    dups = data["duplicates"].copy()
+    dups = get_optional_data("duplicates", os.path.join(FEATURES_DIR, "duplicate_work_candidates.parquet")).copy()
     
     if len(dups) == 0:
         return {"total": 0, "page": page, "limit": limit, "records": []}
