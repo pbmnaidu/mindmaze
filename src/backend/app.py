@@ -11,10 +11,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for React frontend
+# Enable the deployed dashboard and the local Next.js development server.  The
+# frontend normally uses its same-origin `/api` proxy locally, but allowing the
+# local origins also keeps an explicitly configured API URL usable in a browser.
+cors_origins = [
+    "https://mindmaze16.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+cors_origins.extend(
+    origin.strip()
+    for origin in os.environ.get("CORS_ALLOW_ORIGINS", "").split(",")
+    if origin.strip()
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mindmaze16.vercel.app"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"], 
@@ -404,5 +417,8 @@ def get_filter_options(role: str = "national", state: str = None, constituency: 
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting FastAPI server on http://127.0.0.1:8000 ...")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Render injects the listening port through PORT. Binding to 0.0.0.0 is
+    # required in a container; 127.0.0.1 is reachable only from inside it.
+    port = int(os.environ.get("PORT", "8000"))
+    print(f"Starting FastAPI server on 0.0.0.0:{port} ...")
+    uvicorn.run(app, host="0.0.0.0", port=port)
