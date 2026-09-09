@@ -168,8 +168,8 @@ def get_overview(
     master, role = _scope_master(data["master"], role, state, constituency)
     
     # Load supporting datasets only for the overview endpoint.
-    t1 = get_optional_data("t1", os.path.join(PROCESSED_DIR, "t1_allocated_limits.parquet"))
-    t3 = get_optional_data("t3", os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet"))
+    t1 = get_optional_data("t1", os.path.join(PROCESSED_DIR, "t1_allocated_limits.parquet"), ["allocated_amount", "state", "constituency"])
+    t3 = get_optional_data("t3", os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet"), ["work_id", "recommended_amount", "state", "constituency"])
     t1_scoped = _filter_df_by_scope(t1, state, constituency)
     t3_scoped = _filter_df_by_scope(t3, state, constituency)
 
