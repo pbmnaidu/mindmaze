@@ -167,15 +167,12 @@ def get_overview(
     data = get_data()
     master, role = _scope_master(data["master"], role, state, constituency)
     
-    # Load supporting datasets only for the overview endpoint.
-    t1 = get_optional_data("t1", os.path.join(PROCESSED_DIR, "t1_allocated_limits.parquet"), ["allocated_amount", "state", "constituency"])
-    t3 = get_optional_data("t3", os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet"), ["work_id", "recommended_amount", "state", "constituency"])
-    t1_scoped = _filter_df_by_scope(t1, state, constituency)
-    t3_scoped = _filter_df_by_scope(t3, state, constituency)
-
-    total_allocation = float(t1_scoped["allocated_amount"].fillna(0).sum()) if len(t1_scoped) > 0 and "allocated_amount" in t1_scoped else 0.0
-    total_recommended_works = len(t3_scoped)
-    total_recommended_amount = float(t3_scoped["recommended_amount"].fillna(0).sum()) if len(t3_scoped) > 0 and "recommended_amount" in t3_scoped else 0.0
+    # Keep Overview within small Render memory limits. The compact master file
+    # already contains the fields needed for monitoring; legacy T1/T3 files are
+    # optional and are not loaded during the normal dashboard request.
+    total_allocation = 0.0
+    total_recommended_works = int(master["recommended_date"].notna().sum()) if "recommended_date" in master else 0
+    total_recommended_amount = 0.0
     
     total_sanctioned = float(master["sanction_amount"].fillna(0).sum())
     total_disbursed = float(master["effective_expenditure"].fillna(0).sum())
