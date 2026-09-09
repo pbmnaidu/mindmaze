@@ -1,7 +1,11 @@
 import type { ApiResult } from "@/lib/types";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "/api";
+/**
+ * Browser requests always use the same-origin Next.js API routes. Those routes
+ * proxy to FastAPI server-side, which avoids exposing deployment topology and
+ * prevents browser CORS from making the dashboard fall back to sample data.
+ */
+export const API_BASE_URL = "/api";
 
 /**
  * Development-only fallback. Sample data is only ever served when the backend is

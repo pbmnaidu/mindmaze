@@ -35,12 +35,12 @@ const nextConfig: NextConfig = {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
   /**
-   * When NEXT_PUBLIC_API_BASE_URL is not set the app calls a same-origin `/api`
-   * path. Proxy that to the FastAPI service so the browser never needs CORS.
+   * Browser requests always use the same-origin `/api` path. Proxy those
+   * requests to FastAPI so the browser never needs CORS.
    */
   async rewrites() {
     const backend = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
-    if (!backend || process.env.NEXT_PUBLIC_API_BASE_URL) return [];
+    if (!backend) return [];
     return [{ source: "/api/:path*", destination: `${backend}/api/:path*` }];
   },
 };

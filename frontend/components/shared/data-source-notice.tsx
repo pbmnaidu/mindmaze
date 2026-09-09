@@ -16,7 +16,7 @@ export function DataSourceNotice({ source }: { source: DataSource | undefined })
       <p>
         <span className="font-semibold">Development sample data.</span> The FastAPI backend was not
         reachable, so this view is showing local development fixtures. These are not live MPLADS figures.
-        Set <code className="font-mono">NEXT_PUBLIC_API_BASE_URL</code> to connect the service.
+        Configure <code className="font-mono">API_PROXY_TARGET</code> on the Vercel deployment to connect the service.
       </p>
     </div>
   );
