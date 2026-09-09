@@ -12,7 +12,8 @@ export const API_BASE_URL = "/api";
  * unreachable AND the app is not a production build (or the fallback is explicitly
  * opted into). Production always reflects the real API, including its failures.
  */
-export const DEV_FALLBACK_ENABLED = true;
+export const DEV_FALLBACK_ENABLED =
+  process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_DEV_FALLBACK === "true";
 
 export class ApiError extends Error {
   status?: number;
