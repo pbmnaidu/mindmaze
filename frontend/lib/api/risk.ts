@@ -8,10 +8,10 @@ function sampleRiskQueue(params: RiskQueueParams): PaginatedResponse<WorkRecord>
   let records = SAMPLE_WORKS;
   if (params.severity) records = records.filter((w) => w.overall_risk_level === params.severity);
   if (params.state) records = records.filter((w) => w.State === params.state);
-  if (params.category) records = records.filter((w) => w.work_category === params.category);
+  if (params.category) records = records.filter((w) => (w.main_sector || w.work_domain || w.effective_work_category) === params.category);
   if (params.constituency) {
     const c = params.constituency.toLowerCase();
-    records = records.filter((w) => w.Constituency.toLowerCase().includes(c));
+    records = records.filter((w) => (w.Constituency ?? w.constituency ?? "").toLowerCase().includes(c));
   }
   if (params.search) {
     const q = params.search.toLowerCase();

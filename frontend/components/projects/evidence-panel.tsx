@@ -2,17 +2,9 @@ import { ImageOff, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WorkRecord } from "@/lib/types";
 
-export function getCategoryEvidenceImage(category?: string): string {
-  const cat = (category || "").toLowerCase();
-  if (cat.includes("road") || cat.includes("infra")) return "/evidence/road_inspection.jpg";
-  if (cat.includes("school") || cat.includes("edu")) return "/evidence/school_inspection.jpg";
-  if (cat.includes("water") || cat.includes("sani")) return "/evidence/water_inspection.jpg";
-  return "/evidence/community_inspection.jpg";
-}
-
 export function EvidencePanel({ work }: { work: WorkRecord }) {
-  const hasRecorded = work.has_evidence_image ?? true;
-  const imageUrl = work.evidence_image_url || (hasRecorded ? getCategoryEvidenceImage(work.work_category) : null);
+  const hasRecorded = work.has_evidence_image === true;
+  const imageUrl = hasRecorded ? work.evidence_image_url : null;
 
   return (
     <Card className="gap-3 rounded-md shadow-none border">
@@ -42,7 +34,7 @@ export function EvidencePanel({ work }: { work: WorkRecord }) {
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-md border border-dashed px-4 py-8 text-center">
             <ImageOff className="size-5 text-muted-foreground" aria-hidden="true" />
-            <p className="text-sm font-medium">Evidence data not available</p>
+            <p className="text-sm font-medium">Evidence image not available</p>
             <p className="text-xs text-muted-foreground text-pretty">
               Additional official records may be required for verification.
             </p>

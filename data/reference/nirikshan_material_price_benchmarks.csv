@@ -1,0 +1,83 @@
+state,representative_market,year,material,unit,price,source,dominant_type
+Andhra Pradesh,Visakhapatnam,2026,Coarse Aggregate 20mm,INR/tonne,1212.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Assam,Guwahati,2026,Coarse Aggregate 20mm,INR/tonne,1354.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Bihar,Patna,2026,Coarse Aggregate 20mm,INR/tonne,1186.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Chhattisgarh,Raipur,2026,Coarse Aggregate 20mm,INR/tonne,1186.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Delhi (UT),Delhi NCR,2026,Coarse Aggregate 20mm,INR/tonne,1289.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Goa,Goa,2026,Coarse Aggregate 20mm,INR/tonne,1367.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Gujarat,Ahmedabad,2026,Coarse Aggregate 20mm,INR/tonne,1143.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Haryana,Gurgaon,2026,Coarse Aggregate 20mm,INR/tonne,1315.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Himachal Pradesh,Shimla,2026,Coarse Aggregate 20mm,INR/tonne,1367.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Jammu & Kashmir (UT),Jammu,2026,Coarse Aggregate 20mm,INR/tonne,1341.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Jharkhand,Ranchi,2026,Coarse Aggregate 20mm,INR/tonne,1212.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Karnataka,Bangalore,2026,Coarse Aggregate 20mm,INR/tonne,1388.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Kerala,Kochi,2026,Coarse Aggregate 20mm,INR/tonne,1315.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Madhya Pradesh,Bhopal,2026,Coarse Aggregate 20mm,INR/tonne,1199.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Maharashtra,Mumbai,2026,Coarse Aggregate 20mm,INR/tonne,1584.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Odisha,Bhubaneswar,2026,Coarse Aggregate 20mm,INR/tonne,1199.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Punjab,Amritsar,2026,Coarse Aggregate 20mm,INR/tonne,1251.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Rajasthan,Jaipur,2026,Coarse Aggregate 20mm,INR/tonne,1093.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Tamil Nadu,Chennai,2026,Coarse Aggregate 20mm,INR/tonne,1388.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Telangana,Hyderabad,2026,Coarse Aggregate 20mm,INR/tonne,1191.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Uttar Pradesh,Lucknow,2026,Coarse Aggregate 20mm,INR/tonne,1093.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Uttarakhand,Dehradun,2026,Coarse Aggregate 20mm,INR/tonne,1289.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+West Bengal,Kolkata,2026,Coarse Aggregate 20mm,INR/tonne,1191.0,Aggregate_Stone_Prices_India_2018-2026.pdf,
+Andhra Pradesh,Visakhapatnam,2026,Fe500D TMT Steel,INR/MT,59500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Assam,Guwahati,2026,Fe500D TMT Steel,INR/MT,62500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Bihar,Patna,2026,Fe500D TMT Steel,INR/MT,60500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Chhattisgarh,Raipur,2026,Fe500D TMT Steel,INR/MT,56500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Delhi (UT),Delhi NCR,2026,Fe500D TMT Steel,INR/MT,58500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Goa,Goa,2026,Fe500D TMT Steel,INR/MT,60000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Gujarat,Ahmedabad,2026,Fe500D TMT Steel,INR/MT,59000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Haryana,Gurgaon,2026,Fe500D TMT Steel,INR/MT,58500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Jharkhand,Ranchi,2026,Fe500D TMT Steel,INR/MT,57000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Karnataka,Bangalore,2026,Fe500D TMT Steel,INR/MT,61000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Kerala,Kochi,2026,Fe500D TMT Steel,INR/MT,62000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Madhya Pradesh,Indore/Bhopal,2026,Fe500D TMT Steel,INR/MT,58000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Maharashtra,Mumbai/Pune,2026,Fe500D TMT Steel,INR/MT,60000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Odisha,Bhubaneswar,2026,Fe500D TMT Steel,INR/MT,56500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Punjab,Ludhiana/Amritsar,2026,Fe500D TMT Steel,INR/MT,59500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Rajasthan,Jaipur,2026,Fe500D TMT Steel,INR/MT,58500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Tamil Nadu,Chennai,2026,Fe500D TMT Steel,INR/MT,61000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Telangana,Hyderabad,2026,Fe500D TMT Steel,INR/MT,59000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Uttar Pradesh,Lucknow/Kanpur,2026,Fe500D TMT Steel,INR/MT,59500.0,Steel_TMT_Prices_India_2018-2026.pdf,
+West Bengal,Kolkata/Durgapur,2026,Fe500D TMT Steel,INR/MT,56000.0,Steel_TMT_Prices_India_2018-2026.pdf,
+Andhra Pradesh,Visakhapatnam,2026,Cement 50kg,INR/bag,390.0,Cement_Prices_India_2018-2026.pdf,
+Assam,Guwahati,2026,Cement 50kg,INR/bag,440.0,Cement_Prices_India_2018-2026.pdf,
+Bihar,Patna,2026,Cement 50kg,INR/bag,410.0,Cement_Prices_India_2018-2026.pdf,
+Chhattisgarh,Raipur,2026,Cement 50kg,INR/bag,360.0,Cement_Prices_India_2018-2026.pdf,
+Delhi (UT),Delhi NCR,2026,Cement 50kg,INR/bag,380.0,Cement_Prices_India_2018-2026.pdf,
+Goa,Panaji,2026,Cement 50kg,INR/bag,405.0,Cement_Prices_India_2018-2026.pdf,
+Gujarat,Ahmedabad,2026,Cement 50kg,INR/bag,375.0,Cement_Prices_India_2018-2026.pdf,
+Haryana,Gurgaon,2026,Cement 50kg,INR/bag,385.0,Cement_Prices_India_2018-2026.pdf,
+Jharkhand,Ranchi,2026,Cement 50kg,INR/bag,390.0,Cement_Prices_India_2018-2026.pdf,
+Karnataka,Bangalore,2026,Cement 50kg,INR/bag,410.0,Cement_Prices_India_2018-2026.pdf,
+Kerala,Kochi,2026,Cement 50kg,INR/bag,420.0,Cement_Prices_India_2018-2026.pdf,
+Madhya Pradesh,Bhopal,2026,Cement 50kg,INR/bag,380.0,Cement_Prices_India_2018-2026.pdf,
+Maharashtra,Mumbai/Pune,2026,Cement 50kg,INR/bag,410.0,Cement_Prices_India_2018-2026.pdf,
+Odisha,Bhubaneswar,2026,Cement 50kg,INR/bag,370.0,Cement_Prices_India_2018-2026.pdf,
+Punjab,Amritsar,2026,Cement 50kg,INR/bag,385.0,Cement_Prices_India_2018-2026.pdf,
+Rajasthan,Jaipur,2026,Cement 50kg,INR/bag,370.0,Cement_Prices_India_2018-2026.pdf,
+Tamil Nadu,Chennai,2026,Cement 50kg,INR/bag,400.0,Cement_Prices_India_2018-2026.pdf,
+Telangana,Hyderabad,2026,Cement 50kg,INR/bag,390.0,Cement_Prices_India_2018-2026.pdf,
+Uttar Pradesh,Lucknow,2026,Cement 50kg,INR/bag,385.0,Cement_Prices_India_2018-2026.pdf,
+West Bengal,Kolkata,2026,Cement 50kg,INR/bag,380.0,Cement_Prices_India_2018-2026.pdf,
+Andhra Pradesh,Visakhapatnam,2026,Construction Brick,INR/piece,7.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Assam,Guwahati,2026,Construction Brick,INR/piece,9.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Bihar,Patna,2026,Construction Brick,INR/piece,8.0,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Chhattisgarh,Raipur,2026,Construction Brick,INR/piece,6.5,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash / Red Clay
+Delhi (UT),Delhi NCR,2026,Construction Brick,INR/piece,6.0,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash
+Gujarat,Ahmedabad,2026,Construction Brick,INR/piece,6.5,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash
+Haryana,Gurgaon,2026,Construction Brick,INR/piece,6.5,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash
+Jharkhand,Ranchi,2026,Construction Brick,INR/piece,7.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Karnataka,Bangalore,2026,Construction Brick,INR/piece,8.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay / Wire Cut
+Kerala,Kochi,2026,Construction Brick,INR/piece,11.0,Construction_Brick_Prices_India_2018-2026.pdf,Wire Cut / Laterite
+Madhya Pradesh,Bhopal,2026,Construction Brick,INR/piece,7.0,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Maharashtra,Mumbai/Pune,2026,Construction Brick,INR/piece,9.5,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash / Red Clay
+Odisha,Bhubaneswar,2026,Construction Brick,INR/piece,6.5,Construction_Brick_Prices_India_2018-2026.pdf,Fly Ash
+Punjab,Amritsar,2026,Construction Brick,INR/piece,7.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Rajasthan,Jaipur,2026,Construction Brick,INR/piece,7.0,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+Tamil Nadu,Chennai,2026,Construction Brick,INR/piece,9.5,Construction_Brick_Prices_India_2018-2026.pdf,Chamber Brick
+Telangana,Hyderabad,2026,Construction Brick,INR/piece,7.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay / Fly Ash
+Uttar Pradesh,Lucknow,2026,Construction Brick,INR/piece,7.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay
+West Bengal,Kolkata,2026,Construction Brick,INR/piece,8.5,Construction_Brick_Prices_India_2018-2026.pdf,Red Clay

@@ -1,99 +1,104 @@
 import os
-import pandas as pd
+import re
 import numpy as np
+import pandas as pd
+
+
+def _first(frame, names, default=np.nan):
+    for name in names:
+        if name in frame.columns:
+            return frame[name]
+    return pd.Series(default, index=frame.index)
+
+
+def _clean(value):
+    return re.sub(r"\W+", " ", str(value).lower()).strip()
+
 
 def run_compliance_engine():
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    features_dir = os.environ.get("FEATURES_DIR", os.path.join(base_dir, "data", "features"))
-    processed_dir = os.environ.get("PROCESSED_DIR", os.path.join(base_dir, "data", "processed"))
-    
-    master_path = os.path.join(features_dir, "master_analytical.parquet")
-    t3_path = os.path.join(processed_dir, "t3_works_recommended.parquet")
-    
+    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    features = os.environ.get("FEATURES_DIR", os.path.join(base, "data", "features"))
+    processed = os.environ.get("PROCESSED_DIR", os.path.join(base, "data", "processed"))
+    master_path = os.path.join(features, "master_analytical.parquet")
     if not os.path.exists(master_path):
-        raise FileNotFoundError(f"Master dataset missing at {master_path}")
-        
-    print("=== EXECUTING MODULE 5: COMPLIANCE & DATA-QUALITY RULE MATRIX ===")
+        raise FileNotFoundError(master_path)
     master = pd.read_parquet(master_path)
-    print(f"Loaded master dataset: {len(master):,} records")
-    
-    # Merge recommended_date from T3 if available
+
+    t3_path = os.path.join(processed, "t3_works_recommended.parquet")
     if os.path.exists(t3_path):
-        t3 = pd.read_parquet(t3_path)[["work_id", "recommended_date"]].drop_duplicates("work_id")
-        master = pd.merge(master, t3, on="work_id", how="left", suffixes=("", "_t3"))
-        if "recommended_date_t3" in master.columns:
-            master["recommended_date"] = master["recommended_date"].fillna(master["recommended_date_t3"])
-            master.drop(columns=["recommended_date_t3"], inplace=True)
+        t3 = pd.read_parquet(t3_path)
+        if {"work_id", "recommended_date"}.issubset(t3.columns):
+            t3 = t3[["work_id", "recommended_date"]].drop_duplicates("work_id")
+            master = master.merge(t3, on="work_id", how="left", suffixes=("", "_t3"))
+            if "recommended_date_t3" in master:
+                master["recommended_date"] = master["recommended_date"].fillna(master["recommended_date_t3"])
+                master.drop(columns=["recommended_date_t3"], inplace=True)
 
-    # Fast datetime parsing
-    master["sanction_date"] = pd.to_datetime(master["sanction_date"], errors="coerce")
-    master["recommended_date"] = pd.to_datetime(master["recommended_date"], errors="coerce")
-    master["completion_date"] = pd.to_datetime(master["completion_date"], errors="coerce")
-    master["has_evidence_image"] = master["has_evidence_image"].infer_objects(copy=False).fillna(False)
+    rec = pd.to_datetime(_first(master, ["recommended_date", "Recommended date"]), errors="coerce")
+    sanction = pd.to_datetime(_first(master, ["sanction_date", "Sanction Date"]), errors="coerce")
+    start = pd.to_datetime(_first(master, ["start_date", "first_payment_date"]), errors="coerce")
+    completion = pd.to_datetime(_first(master, ["completion_date"]), errors="coerce")
+    today = pd.Timestamp.now().normalize()
+    status = _first(master, ["work_status", "Work Status"], "").fillna("").astype(str).str.lower()
+    completed = completion.notna() | status.str.contains("complete", na=False)
+    amount = pd.to_numeric(_first(master, ["effective_expenditure", "total_expenditure"], 0), errors="coerce").fillna(0)
+    sanctioned = pd.to_numeric(_first(master, ["sanction_amount"], 0), errors="coerce").fillna(0)
+    partial = status.str.contains("partial|progress|ongoing", na=False) | amount.gt(0)
+    description = _first(master, ["description", "Work description"], "").fillna("").astype(str)
+    constituency = _first(master, ["constituency", "Constituency"], "").fillna("").astype(str).str.lower().str.strip()
 
-    # 1. Vectorized Rule Checks
-    # RULE_COMP_01: Completed Work Missing Evidence Image
-    r1_mask = master["completion_date"].notnull() & (~master["has_evidence_image"])
-    
-    # RULE_COMP_02: Chronological Sequence Violation
-    r2_mask = (master["recommended_date"].notnull() & master["sanction_date"].notnull() & (master["sanction_date"] < master["recommended_date"])) | \
-              (master["sanction_date"].notnull() & master["completion_date"].notnull() & (master["completion_date"] < master["sanction_date"]))
-              
-    # RULE_COMP_03: Data Quality Gap (Missing or Incomplete Description)
-    desc_str = master["description"].fillna("").astype(str).str.strip()
-    r3_mask = desc_str.str.len() < 15
-    
-    # RULE_COMP_04: Completed Status with Zero Expenditure Disbursal Record
-    exp_val = master["effective_expenditure"].fillna(0)
-    r4_mask = master["completion_date"].notnull() & (exp_val <= 0)
+    c01 = rec.notna() & sanction.notna() & ((sanction - rec).dt.days > 45)
+    repeat = pd.DataFrame({"key": description.map(_clean), "constituency": constituency, "date": rec})
+    c02 = pd.Series(False, index=master.index)
+    for _, group in repeat[(repeat.key != "") & repeat.date.notna()].groupby(["key", "constituency"]):
+        dates = group.date.sort_values()
+        if len(dates) > 1:
+            c02.loc[dates.index[dates.diff().dt.days.fillna(999999).le(180)]] = True
 
-    # Calculate compliance score vectorially
-    master["compliance_risk_score"] = (
-        (r1_mask.astype(int) * 40) +
-        (r2_mask.astype(int) * 50) +
-        (r3_mask.astype(int) * 25) +
-        (r4_mask.astype(int) * 25)
-    ).clip(upper=100)
+    elapsed = (completion.fillna(today) - sanction).dt.days
+    c03 = completed & sanction.notna() & elapsed.lt(15)
+    c04 = completed & sanction.notna() & elapsed.ge(15) & elapsed.le(365) & ~c03
+    c05 = sanction.notna() & ~completed & ~partial & (today - sanction).dt.days.gt(365)
+    c06 = partial & ~completed & sanction.notna() & (today - sanction).dt.days.gt(365) & (today - sanction).dt.days.le(548)
+    c07 = partial & ~completed & sanction.notna() & (today - sanction).dt.days.gt(548)
+    c08 = ((rec.notna() & sanction.notna() & rec.gt(sanction)) |
+           (sanction.notna() & start.notna() & sanction.gt(start)) |
+           (start.notna() & completion.notna() & start.gt(completion)) |
+           (sanction.notna() & completion.notna() & sanction.gt(completion)))
+    c09 = amount.gt(sanctioned) & sanctioned.gt(0)
+    c10 = amount.lt(0) | sanctioned.lt(0) | (amount.gt(0) & sanctioned.eq(0))
+    c11 = rec.isna() | sanction.isna() | description.str.len().lt(5) | constituency.eq("")
+    c12 = ((status.str.contains("complete", na=False) & completion.isna()) |
+           (completion.notna() & status.str.contains("ongoing|progress|sanction", na=False)))
 
-    # Build Triggered Rules List & Audit Explanation Vectorially
-    rule1_txt = np.where(r1_mask, "RULE_COMP_01: Missing Evidence Image for Completed Asset", "")
-    rule2_txt = np.where(r2_mask, "RULE_COMP_02: Chronological Date Sequence Violation", "")
-    rule3_txt = np.where(r3_mask, "RULE_COMP_03: Data Quality Gap (Incomplete Description)", "")
-    rule4_txt = np.where(r4_mask, "RULE_COMP_04: Completed Status with Zero Expenditure Disbursal", "")
+    rules = {
+        "C01": (c01, 100, "Recommendation to sanction took more than 45 days."),
+        "C02": (c02, 100, "A similar work was recommended within 180 days."),
+        "C03": (c03, 100, "The work was marked complete in less than 15 days."),
+        "C04": (c04, 0, "The completion time is within the normal 15-day to 1-year window."),
+        "C05": (c05, 35, "There is no completion or progress after 1 year."),
+        "C06": (c06, 10, "The work has progress and is still within the 18-month window."),
+        "C07": (c07, 100, "The work has progress but is still incomplete after 18 months."),
+        "C08": (c08, 50, "The recorded dates are not in the correct order."),
+        "C09": (c09, 50, "Recorded spending is higher than the sanctioned amount."),
+        "C10": (c10, 35, "The financial values are missing, negative, or invalid."),
+        "C11": (c11, 35, "Required work information is missing."),
+        "C12": (c12, 35, "The completion status does not match the completion date."),
+    }
+    score = pd.Series(0.0, index=master.index)
+    messages = pd.DataFrame(index=master.index)
+    for rule_id, (mask, points, label) in rules.items():
+        score = score + mask.astype(int) * points
+        messages[rule_id] = np.where(mask, label, "")
+    master["compliance_risk_score"] = score.clip(upper=100)
+    master["compliance_explanation"] = messages.apply(lambda row: "\n".join(f"{index}. {value}" for index, value in enumerate((v for v in row if v), start=1)) or "No compliance rule triggered. Image verification is optional.", axis=1)
+    master["triggered_rules"] = messages.apply(lambda row: ", ".join(k for k, v in row.items() if v), axis=1)
+    master["compliance_risk_level"] = master.compliance_risk_score.map(lambda x: "CRITICAL" if x >= 85 else "HIGH" if x >= 65 else "MEDIUM" if x >= 35 else "LOW")
+    master["is_compliance_flagged"] = master.compliance_risk_score.ge(35)
+    out = os.path.join(features, "compliance_risk_analysis.parquet")
+    master.to_parquet(out, index=False)
+    print(f"Compliance rules evaluated for {len(master):,} works; saved to {out}")
 
-    def join_reasons(r1, r2, r3, r4):
-        parts = [p for p in [r1, r2, r3, r4] if p != ""]
-        if not parts:
-            return "Full administrative & data compliance verified."
-        return " | ".join(parts)
-
-    reasons_vec = np.vectorize(join_reasons)(rule1_txt, rule2_txt, rule3_txt, rule4_txt)
-    master["compliance_explanation"] = reasons_vec
-    master["triggered_rules"] = reasons_vec
-
-    def assign_comp_level(score):
-        if score >= 85:
-            return "CRITICAL"
-        elif score >= 65:
-            return "HIGH"
-        elif score >= 35:
-            return "MEDIUM"
-        return "LOW"
-
-    master["compliance_risk_level"] = master["compliance_risk_score"].apply(assign_comp_level)
-    master["is_compliance_flagged"] = master["compliance_risk_score"] >= 35
-
-    out_file = os.path.join(features_dir, "compliance_risk_analysis.parquet")
-    master.to_parquet(out_file, index=False)
-    
-    print("\n=== MODULE 5 EXECUTION SUMMARY ===")
-    print(f"Total Works Evaluated: {len(master):,}")
-    print("Compliance Risk Level Breakdown:")
-    print(master["compliance_risk_level"].value_counts().to_string())
-    print(f"\nWorks Flagged for Missing Evidence Images (RULE_COMP_01): {r1_mask.sum():,}")
-    print(f"Works Flagged for Date Sequence Violations (RULE_COMP_02): {r2_mask.sum():,}")
-    print(f"Works Flagged for Incomplete Descriptions (RULE_COMP_03): {r3_mask.sum():,}")
-    print(f"Results saved to: {out_file}")
 
 if __name__ == "__main__":
     run_compliance_engine()

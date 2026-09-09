@@ -51,7 +51,7 @@ export function normalizeRiskLevel(value: string | null | undefined): RiskLevel 
 }
 
 export interface RiskComponent {
-  key: "financial" | "vendor" | "duplicate" | "compliance";
+  key: "financial" | "duplicate" | "compliance";
   label: string;
   score: number;
   level: RiskLevel | null;
@@ -72,21 +72,14 @@ export function getRiskComponents(work: WorkRecord): RiskComponent[] {
       explanation: work.financial_explanation,
     },
     {
-      key: "vendor",
-      label: "Vendor Risk",
-      score: work.vendor_risk_score,
-      level: normalizeRiskLevel(work.vendor_risk_level),
-      explanation: work.vendor_risk_explanation,
-    },
-    {
       key: "duplicate",
       label: "Duplicate Risk",
       score: work.duplicate_risk_score ?? 0,
       level: null,
       explanation:
         (work.duplicate_risk_score ?? 0) >= 70
-          ? "A highly similar work description was identified. Potential duplicate candidate requires verification."
-          : "No highly similar work description was identified.",
+          ? "This work description is very similar to another work. Check whether they are the same work."
+          : "No very similar work description was found.",
     },
     {
       key: "compliance",

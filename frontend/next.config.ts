@@ -39,8 +39,7 @@ const nextConfig: NextConfig = {
    * requests to FastAPI so the browser never needs CORS.
    */
   async rewrites() {
-    const backend = process.env.API_PROXY_TARGET?.replace(/\/$/, "");
-    if (!backend) return [];
+    const backend = (process.env.API_PROXY_TARGET || "http://127.0.0.1:8000").replace(/\/$/, "");
     return [{ source: "/api/:path*", destination: `${backend}/api/:path*` }];
   },
 };

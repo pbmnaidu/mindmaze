@@ -25,7 +25,13 @@ export function ProjectsView() {
   const { apiScope, role, label } = useRoleScope();
   const { filters, queryParams, apply, reset, activeCount } = useQueueFilters(PAGE_SIZE);
   const options = useFilterOptions(apiScope ?? {});
-  const projects = useProjects({ ...queryParams, ...(apiScope ?? {}) });
+  const projects = useProjects({
+    ...queryParams,
+    role: apiScope?.role ?? queryParams.role,
+    state: apiScope?.state || queryParams.state,
+    constituency: apiScope?.constituency || queryParams.constituency,
+    search: queryParams.constituency || queryParams.search,
+  });
   const [layout, setLayout] = useState<"cards" | "table">("cards");
 
   const data = projects.data?.data;
@@ -66,7 +72,7 @@ export function ProjectsView() {
           isFetching={projects.isFetching}
           onPageChange={(page) => apply({ page })}
           onReset={reset}
-          defaultHidden={{ financial: false, vendor: false, duplicate: false, compliance: false }}
+          defaultHidden={{ financial: false, duplicate: false, compliance: false }}
         />
       ) : (
         <div className="flex flex-col gap-3">

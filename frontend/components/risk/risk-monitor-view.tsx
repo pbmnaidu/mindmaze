@@ -15,7 +15,13 @@ export function RiskMonitorView() {
   const { apiScope, role, label } = useRoleScope();
   const { filters, queryParams, apply, reset, activeCount } = useQueueFilters(DEFAULT_PAGE_SIZE);
   const options = useFilterOptions(apiScope ?? {});
-  const queue = useRiskMonitor({ ...queryParams, ...(apiScope ?? {}) });
+  const queue = useRiskMonitor({
+    ...queryParams,
+    role: apiScope?.role ?? queryParams.role,
+    state: apiScope?.state || queryParams.state,
+    constituency: apiScope?.constituency || queryParams.constituency,
+    search: queryParams.constituency || queryParams.search,
+  });
 
   const data = queue.data?.data;
 
@@ -24,7 +30,7 @@ export function RiskMonitorView() {
     <>
       <PageHeader
         title="Risk Monitor"
-        description={`Prioritized works requiring further review within ${label}. Filtering, sorting, and pagination are performed by the risk intelligence service.`}
+        description={`Highest-priority works are shown first within ${label}. Start at the top and review downward.`}
       />
 
       <DataSourceNotice source={queue.data?.source} />

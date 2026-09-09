@@ -1,14 +1,14 @@
-import { ArrowDown, Calculator, Copy, FileCheck2, Landmark, Scale, Users } from "lucide-react";
+import { ArrowDown, Calculator, Copy, FileCheck2, Landmark, Scale } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge } from "@/components/risk/risk-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
 
 const PIPELINE = [
-  { label: "MPLADS data", detail: "Work records, sanctions, expenditure, vendors, dates" },
+  { label: "MPLADS data", detail: "Sanctioned work descriptions, sanctions, expenditure, dates, duplicate and compliance fields" },
   { label: "Data cleaning & validation", detail: "Type coercion, de-duplication of source rows, null handling" },
-  { label: "Feature engineering", detail: "Peer medians, percentile ranks, vendor shares, date deltas" },
-  { label: "AI + analytics", detail: "Isolation Forest, TF-IDF + cosine similarity, statistical tests" },
+  { label: "Feature engineering", detail: "Sector classification, quantity-based reference costs, peer medians, percentiles, and date checks" },
+  { label: "AI + analytics", detail: "TF-IDF + SVM classification, Isolation Forest, TF-IDF similarity, and statistical tests" },
   { label: "Risk engine", detail: "Component scores combined into a composite 0–100 score" },
   { label: "Explainable risk indicators", detail: "Human-readable reason per component" },
   { label: "Prioritized audit queue", detail: "Works ranked for review by composite score" },
@@ -20,7 +20,7 @@ const METHODS = [
     icon: Landmark,
     title: "Financial anomaly detection",
     technique: "Isolation Forest + peer-group statistics",
-    body: "Sanction amounts are compared within peer groups defined by work category and state. Peer ratio (sanction ÷ peer median), percentile rank, and an IQR upper fence (Q3 + 1.5 × IQR) describe how far a work sits from comparable works. An Isolation Forest model scores multivariate unusualness across these features.",
+    body: "The sanctioned description is normalized and classified into the supplied sector/sub-sector taxonomy using TF-IDF plus a linear SVM. When quantity and reference costs are available, the adjusted unit cost is multiplied by quantity and the sanctioned amount is checked against the reference range. If no valid range exists, the amount is compared with the classified sector/state peer group using median, percentile, Q1, Q3, IQR, and the upper fence (Q3 + 1.5 × IQR). Isolation Forest adds a multivariate unusualness signal. A cost inside a valid reference range does not receive financial anomaly risk from a lower peer median.",
     output: "Financial risk score and level; explanation stating the peer ratio and baseline.",
   },
   {
@@ -31,18 +31,11 @@ const METHODS = [
     output: "Duplicate risk score (similarity-derived) and candidate pairs with the matching descriptions.",
   },
   {
-    icon: Users,
-    title: "Vendor & payment analysis",
-    technique: "Statistical pattern analysis",
-    body: "The share of constituency sanctions held by a work's leading vendor is computed alongside work counts and expenditure concentration. Expenditure-to-sanction relationships are evaluated for disbursal progression. High concentration is an indicator for procurement review, not a finding.",
-    output: "Vendor risk score and level; explanation referencing the observed share.",
-  },
-  {
     icon: FileCheck2,
     title: "Compliance monitoring",
     technique: "Rule-based consistency checks",
-    body: "Deterministic rules test the internal consistency of each record: presence of an evidence image where completion is recorded, date ordering (recommendation → sanction → completion), and expenditure within sanction. Each triggered rule contributes to the compliance score with a plain-language warning.",
-    output: "Compliance risk score and level; the triggered warning text.",
+    body: "Twelve rules test recommendation timing, repeat recommendations within 180 days, completion windows, no-progress deadlines, date ordering, expenditure consistency, invalid financial values, required fields, and completion-status consistency. C04 is compliant, C06 is monitored, and critical violations include C01, C02, C03, and C07. Image verification is optional and never creates a failure by itself.",
+    output: "Compliance risk score and level, triggered rule IDs (C01–C12), and plain-language warnings.",
   },
 ];
 
@@ -120,14 +113,14 @@ export function MethodologyView() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="overflow-x-auto rounded-md border bg-muted/50 p-3 font-mono text-xs leading-relaxed">
-              Composite = 0.35 × Financial + 0.25 × Vendor + 0.25 × Duplicate + 0.15 × Compliance
+              Composite = 0.40 × Compliance + 0.35 × Financial + 0.23 × Duplicate + 0.02 × Material context
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
+                ["Compliance", "40%"],
                 ["Financial", "35%"],
-                ["Vendor", "25%"],
-                ["Duplicate", "25%"],
-                ["Compliance", "15%"],
+                ["Duplicate", "23%"],
+                ["Material context", "2%"],
               ].map(([name, weight]) => (
                 <div key={name} className="rounded-md border p-3">
                   <p className="text-xs text-muted-foreground">{name}</p>

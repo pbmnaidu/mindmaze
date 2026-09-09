@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -68,6 +69,20 @@ def get_data():
             _DATA_CACHE["t1"] = pd.read_parquet(t1_p)
         else:
             _DATA_CACHE["t1"] = pd.DataFrame()
+
+    if "t3" not in _DATA_CACHE:
+        t3_p = os.path.join(PROCESSED_DIR, "t3_works_recommended.parquet")
+        if os.path.exists(t3_p):
+            _DATA_CACHE["t3"] = pd.read_parquet(t3_p)
+        else:
+            _DATA_CACHE["t3"] = pd.DataFrame()
+
+    if "t5" not in _DATA_CACHE:
+        t5_p = os.path.join(PROCESSED_DIR, "t5_works_completed.parquet")
+        if os.path.exists(t5_p):
+            _DATA_CACHE["t5"] = pd.read_parquet(t5_p)
+        else:
+            _DATA_CACHE["t5"] = pd.DataFrame()
             
     if "t6" not in _DATA_CACHE:
         t6_p = os.path.join(PROCESSED_DIR, "t6_expenditure.parquet")
@@ -82,7 +97,14 @@ def clean_record_for_json(record):
     """Helper to convert numpy types and NaNs to standard JSON types."""
     clean = {}
     for k, v in record.items():
-        if pd.isna(v):
+        # Material analysis fields are structured lists/dicts; pd.isna on a
+        # list returns an array and cannot be used as a scalar condition.
+        if isinstance(v, (list, dict, np.ndarray)):
+            clean[k] = v.tolist() if isinstance(v, np.ndarray) else v
+            continue
+        if isinstance(v, str) and k in {"explainable_audit_summary", "recommended_reviewer_action", "financial_explanation", "compliance_explanation"}:
+            clean[k] = v.replace(" | ", "\n")
+        elif pd.isna(v):
             clean[k] = None
         elif isinstance(v, (np.int64, np.int32)):
             clean[k] = int(v)
@@ -135,6 +157,26 @@ def _scope_master(master, role="national", state=None, constituency=None):
 def _completion_mask(df):
     return df["completion_date"].notna() if "completion_date" in df else pd.Series(False, index=df.index)
 
+def _filter_df_by_scope(df, state=None, constituency=None):
+    if df is None or len(df) == 0:
+        return pd.DataFrame()
+    scoped = df
+    if state and str(state).strip() and "state" in scoped.columns:
+        scoped = scoped[_matches(scoped["state"], state)]
+    if constituency and str(constituency).strip() and "constituency" in scoped.columns:
+        scoped = scoped[_matches(scoped["constituency"], constituency)]
+    return scoped
+
+@app.get("/dashboard")
+@app.get("/dashboard.html")
+def serve_dashboard():
+    dash_path = os.path.join(STATIC_DIR, "dashboard.html")
+    if not os.path.exists(dash_path):
+        dash_path = os.path.join(BASE_DIR, "dashboard.html")
+    if os.path.exists(dash_path):
+        return FileResponse(dash_path, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Dashboard HTML file not found.")
+
 @app.get("/api/health")
 def health_check():
     data = get_data()
@@ -151,10 +193,15 @@ def get_overview(
 ):
     data = get_data()
     master, role = _scope_master(data["master"], role, state, constituency)
-    t1 = data["t1"]
     
-    # Allocation data is national-only and cannot safely be apportioned to a scope.
-    total_allocation = float(t1["allocated_amount"].sum()) if role == "national" and len(t1) > 0 else 0.0
+    # Filter T1 (Allocated) and T3 (Recommended) by scope
+    t1_scoped = _filter_df_by_scope(data.get("t1"), state, constituency)
+    t3_scoped = _filter_df_by_scope(data.get("t3"), state, constituency)
+
+    total_allocation = float(t1_scoped["allocated_amount"].fillna(0).sum()) if len(t1_scoped) > 0 and "allocated_amount" in t1_scoped else (float(data["t1"]["allocated_amount"].sum()) if role == "national" and len(data.get("t1", [])) > 0 else 0.0)
+    total_recommended_works = len(t3_scoped)
+    total_recommended_amount = float(t3_scoped["recommended_amount"].fillna(0).sum()) if len(t3_scoped) > 0 and "recommended_amount" in t3_scoped else 0.0
+    
     total_sanctioned = float(master["sanction_amount"].fillna(0).sum())
     total_disbursed = float(master["effective_expenditure"].fillna(0).sum())
     
@@ -177,18 +224,22 @@ def get_overview(
     state_list = [clean_record_for_json(r) for r in state_agg.to_dict(orient="records")]
     
     # Category-level aggregation
-    cat_agg = master.groupby("work_category").agg(
+    category_field = "main_sector" if "main_sector" in master.columns else "effective_work_category"
+    cat_agg = master.groupby(category_field).agg(
         total_works=("work_id", "count"),
         total_sanctioned=("sanction_amount", "sum"),
         high_risk_works=("overall_risk_level", lambda x: (x.isin(["HIGH", "CRITICAL"])).sum())
-    ).reset_index().sort_values("total_works", ascending=False)
+    ).reset_index().rename(columns={category_field: "main_sector"}).sort_values("total_works", ascending=False)
     
     cat_list = [clean_record_for_json(r) for r in cat_agg.to_dict(orient="records")]
     
     return {
         "summary": {
             "total_allocated_funds": total_allocation,
+            "total_recommended_works": total_recommended_works,
+            "total_recommended_amount": total_recommended_amount,
             "total_sanctioned_amount": total_sanctioned,
+            "total_sanctioned_works": total_works,
             "total_disbursed_amount": total_disbursed,
             "total_works": total_works,
             "completed_works": completed_works,
@@ -226,9 +277,11 @@ def get_risk_monitor_queue(
     if role.strip().lower() == "national" and state and state.strip():
         df = df[df["state"].str.upper() == state.strip().upper()]
     if role.strip().lower() == "national" and constituency and constituency.strip():
-        df = df[df["constituency"].str.upper() == constituency.strip().upper()]
+        query_constituency = constituency.strip().casefold()
+        df = df[df["constituency"].fillna("").str.casefold().str.contains(query_constituency, regex=False)]
     if category and category.strip():
-        df = df[df["work_category"].str.lower() == category.strip().lower()]
+        category_field = "main_sector" if "main_sector" in df.columns else "effective_work_category"
+        df = df[df[category_field].fillna("").str.lower() == category.strip().lower()]
     if severity and severity.strip():
         df = df[df["overall_risk_level"].str.upper() == severity.strip().upper()]
     if completion_status and completion_status.strip():
@@ -245,25 +298,34 @@ def get_risk_monitor_queue(
         df = df[
             df["work_id"].str.lower().str.contains(q) |
             df["description"].fillna("").str.lower().str.contains(q) |
-            df["mp_name"].fillna("").str.lower().str.contains(q)
+            df["mp_name"].fillna("").str.lower().str.contains(q) |
+            df["constituency"].fillna("").str.lower().str.contains(q)
         ]
         
+    page_val = int(page.default) if hasattr(page, 'default') else int(page)
+    limit_val = int(limit.default) if hasattr(limit, 'default') else int(limit)
+
     total_records = len(df)
     
-    # Sort by composite_risk_score descending
-    df_sorted = df.sort_values("composite_risk_score", ascending=False)
+    # Always put the work needing attention first. Tie-break with the
+    # highest-priority components so the order remains stable and useful.
+    priority_columns = [
+        column for column in ["composite_risk_score", "compliance_risk_score", "financial_risk_score", "duplicate_risk_score"]
+        if column in df.columns
+    ]
+    df_sorted = df.sort_values(priority_columns, ascending=[False] * len(priority_columns), kind="stable")
     
-    start = (page - 1) * limit
-    end = start + limit
+    start = (page_val - 1) * limit_val
+    end = start + limit_val
     paginated = df_sorted.iloc[start:end]
     
     records = [clean_record_for_json(r) for r in paginated.to_dict(orient="records")]
     
     return {
         "total": total_records,
-        "page": page,
-        "limit": limit,
-        "total_pages": int(np.ceil(total_records / limit)) if total_records > 0 else 0,
+        "page": page_val,
+        "limit": limit_val,
+        "total_pages": int(np.ceil(total_records / limit_val)) if total_records > 0 else 0,
         "records": records
     }
 
@@ -312,18 +374,11 @@ def _fetch_work_detail_internal(target_work_id: str):
 
     work_record["expenditure_trips"] = expenditure_trips
     
-    # Evidence Image URL mapping
-    work_record["has_evidence_image"] = True
-    cat_lower = str(work_record.get("work_category", "")).lower()
-    if "road" in cat_lower or "infra" in cat_lower:
-        img_name = "road_inspection.jpg"
-    elif "school" in cat_lower or "edu" in cat_lower:
-        img_name = "school_inspection.jpg"
-    elif "water" in cat_lower or "sani" in cat_lower:
-        img_name = "water_inspection.jpg"
-    else:
-        img_name = "community_inspection.jpg"
-    work_record["evidence_image_url"] = f"/evidence/{img_name}"
+    # Only expose evidence when the source record has an actual image/file
+    # reference. Classification must never create a proxy evidence image.
+    work_record["evidence_image_present"] = bool(work_record.get("has_evidence_image") is True)
+    work_record["evidence_image_source"] = "source Image field" if work_record["evidence_image_present"] else None
+    work_record["evidence_image_reference"] = work_record.get("evidence_image_url") if work_record["evidence_image_present"] else None
 
     cand_dup = []
     if len(duplicates) > 0:
@@ -399,7 +454,8 @@ def get_filter_options(role: str = "national", state: str = None, constituency: 
     master, role = _scope_master(data["master"], role, state, constituency)
     
     states = sorted([str(s) for s in master["state"].dropna().unique() if str(s).strip() != ""])
-    categories = sorted([str(c) for c in master["work_category"].dropna().unique() if str(c).strip() != ""])
+    category_field = "main_sector" if "main_sector" in master.columns else "effective_work_category"
+    categories = sorted([str(c) for c in master[category_field].dropna().unique() if str(c).strip() != ""])
     severities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
     
     constituencies_by_state = {

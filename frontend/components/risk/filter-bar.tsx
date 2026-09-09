@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,10 +34,25 @@ function toDraft(filters: QueueFilterState): Draft {
 export function FilterBar({ filters, options, onApply, onReset, activeCount, showSeverity = true, lockedScope }: FilterBarProps) {
   const [draft, setDraft] = useState<Draft>(() => toDraft(filters));
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [constituencyOpen, setConstituencyOpen] = useState(false);
 
   useEffect(() => {
     setDraft(toDraft(filters));
   }, [filters]);
+
+  const constituencyOptions = useMemo(() => {
+    const state = lockedScope?.state || draft.state;
+    return state ? options?.constituenciesByState?.[state] ?? [] : options?.constituencies ?? [];
+  }, [draft.state, lockedScope?.state, options]);
+  const matchingConstituencies = constituencyOptions.filter((value) =>
+    value.toLowerCase().includes((draft.constituency || "").toLowerCase()),
+  ).slice(0, 80);
+  const chooseConstituency = (constituency: string) => {
+    const next = { ...draft, constituency };
+    setDraft(next);
+    setConstituencyOpen(false);
+    onApply(next);
+  };
 
   const submit = (event?: React.FormEvent) => {
     event?.preventDefault();
@@ -78,14 +93,31 @@ export function FilterBar({ filters, options, onApply, onReset, activeCount, sho
 
       <div className="flex flex-col gap-1.5 lg:w-44">
         <Label htmlFor="filter-constituency" className="text-xs">Constituency</Label>
-        <Input
-          id="filter-constituency"
-          value={lockedScope?.constituency ?? draft.constituency}
-          disabled={Boolean(lockedScope?.constituency)}
-          onChange={(e) => setDraft((d) => ({ ...d, constituency: e.target.value }))}
-          placeholder="Any constituency"
-          className="h-9 text-xs"
-        />
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            id="filter-constituency"
+            value={lockedScope?.constituency ?? draft.constituency}
+            disabled={Boolean(lockedScope?.constituency)}
+            onFocus={() => setConstituencyOpen(true)}
+            onChange={(e) => { setDraft((d) => ({ ...d, constituency: e.target.value })); setConstituencyOpen(true); }}
+            placeholder="Pick or search"
+            className="h-9 pl-8 text-xs"
+          />
+          {constituencyOpen && !lockedScope?.constituency && (
+            <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+              <button type="button" className="w-full rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent" onMouseDown={(event) => event.preventDefault()} onClick={() => chooseConstituency("")}>
+                All constituencies
+              </button>
+              {matchingConstituencies.map((constituency) => (
+                <button type="button" key={constituency} className="w-full rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent" onMouseDown={(event) => event.preventDefault()} onClick={() => chooseConstituency(constituency)}>
+                  {toTitleCase(constituency)}
+                </button>
+              ))}
+              {matchingConstituencies.length === 0 && <p className="px-2 py-2 text-xs text-muted-foreground">No constituency found.</p>}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5 lg:w-40">

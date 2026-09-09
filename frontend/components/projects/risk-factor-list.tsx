@@ -27,7 +27,7 @@ export function RiskFactorList({ work }: { work: WorkRecord }) {
                   {c.level && <RiskBadge level={c.level} />}
                 </div>
               </div>
-              <p className="text-sm leading-relaxed text-foreground text-pretty">{textOrDash(c.explanation)}</p>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-foreground text-pretty">{textOrDash(c.explanation)}</p>
             </li>
           ))}
         </ol>
@@ -36,7 +36,7 @@ export function RiskFactorList({ work }: { work: WorkRecord }) {
             {work.explainable_audit_summary && (
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Engine summary</p>
-                <p className="mt-1 text-sm leading-relaxed text-pretty">{work.explainable_audit_summary}</p>
+                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-pretty">{work.explainable_audit_summary}</p>
               </div>
             )}
             {work.recommended_reviewer_action && (
@@ -45,7 +45,7 @@ export function RiskFactorList({ work }: { work: WorkRecord }) {
                   <ClipboardCheck className="size-3.5" aria-hidden="true" />
                   Recommended review
                 </p>
-                <p className="mt-1 text-sm leading-relaxed text-pretty">{work.recommended_reviewer_action}</p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-pretty">{work.recommended_reviewer_action}</p>
               </div>
             )}
           </div>

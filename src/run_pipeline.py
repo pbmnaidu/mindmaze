@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))
 from src.preprocessing.cleaner import preprocess_all
 from src.data.master_builder import build_master_dataset
 from src.modules.financial_anomaly import run_financial_anomaly_detection
-from src.modules.vendor_risk import run_vendor_risk_analysis
 from src.modules.duplicate_detection import run_duplicate_work_detection
 from src.modules.compliance_engine import run_compliance_engine
 from src.risk.composite_risk_engine import run_composite_risk_engine
@@ -27,9 +26,6 @@ def run_entire_pipeline():
     
     print("\n--- PHASE 2: MODULE 2 (FINANCIAL ANOMALY) ---")
     run_financial_anomaly_detection()
-    
-    print("\n--- PHASE 2: MODULE 3 (VENDOR RISK) ---")
-    run_vendor_risk_analysis()
     
     print("\n--- PHASE 2: MODULE 4 (DUPLICATE DETECTION NLP) ---")
     run_duplicate_work_detection()

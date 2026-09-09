@@ -127,11 +127,23 @@ export function ProjectInfoGrid({ work }: { work: WorkRecord }) {
           title="Basic information"
           fields={[
             { label: "Work ID", value: <span className="font-mono">{work.work_id}</span> },
-            { label: "Category", value: textOrDash(work.work_category) },
+            { label: "Source category", value: textOrDash(work.original_work_category || "Not used for classification") },
+            { label: "Effective category", value: textOrDash(work.effective_work_category || work.work_category) },
             { label: "State", value: toTitleCase(work.State ?? work.state) },
             { label: "Constituency", value: toTitleCase(work.Constituency ?? work.constituency) },
             { label: "Member of Parliament", value: textOrDash(work.mp_name) },
             { label: "Status", value: <StatusBadge status={deriveStatus(work)} /> },
+          ]}
+        />
+        <InfoCard
+          title="AI classification"
+          fields={[
+            { label: "Domain", value: textOrDash(work.work_domain || work.ai_work_domain) },
+            { label: "Category", value: textOrDash(work.ai_work_category) },
+            { label: "Subcategory", value: textOrDash(work.work_subcategory) },
+            { label: "Confidence", value: work.category_confidence === undefined ? "—" : work.category_confidence.toFixed(2) },
+            { label: "Source", value: textOrDash(work.category_source) },
+            { label: "Peer group", value: `${textOrDash(work.peer_group_level)} (${work.peer_group_size ?? "—"} works)` },
           ]}
         />
         <InfoCard
@@ -140,7 +152,7 @@ export function ProjectInfoGrid({ work }: { work: WorkRecord }) {
             { label: "Sanction amount", value: <span className="font-mono tabular">{formatInr(work.sanction_amount)}</span> },
             { label: "Effective expenditure", value: <span className="font-mono tabular">{formatInr(work.effective_expenditure)}</span> },
             { label: "Expenditure / sanction", value: <span className="font-mono tabular">{formatPercent(expenditureShare)}</span> },
-            { label: "Peer category median", value: <span className="font-mono tabular">{formatInr(work.peer_category_median_amount)}</span> },
+            { label: "Peer category median", value: <span className="font-mono tabular">{formatInr(work.peer_group_median ?? work.peer_category_median_amount)}</span> },
             { label: "Amount to peer ratio", value: <span className="font-mono tabular">{formatRatio(work.amount_to_peer_ratio)}</span> },
             { label: "Category percentile", value: <span className="font-mono tabular">{work.category_percentile !== undefined ? `${formatScore(work.category_percentile)}th` : "—"}</span> },
           ]}
@@ -155,21 +167,12 @@ export function ProjectInfoGrid({ work }: { work: WorkRecord }) {
           ]}
         />
         <InfoCard
-          title="Vendor & payment information"
-          fields={[
-            { label: "Top vendor", value: textOrDash(work.top_vendor) },
-            { label: "Top vendor share", value: <span className="font-mono tabular">{formatPercent(work.top_vendor_share)}</span> },
-            { label: "Vendor risk score", value: <span className="font-mono tabular">{formatScore(work.vendor_risk_score)}</span> },
-            { label: "Vendor risk level", value: <RiskBadge level={work.vendor_risk_level} /> },
-          ]}
-        />
-        <InfoCard
           title="Compliance indicators"
           fields={[
             { label: "Compliance risk score", value: <span className="font-mono tabular">{formatScore(work.compliance_risk_score)}</span> },
             { label: "Compliance risk level", value: <RiskBadge level={work.compliance_risk_level} /> },
             { label: "Evidence image on record", value: work.has_evidence_image === undefined ? "—" : work.has_evidence_image ? "Yes" : "No" },
-            { label: "Compliance warning", value: <span className="block max-w-56 text-pretty">{textOrDash(work.compliance_explanation)}</span> },
+            { label: "Compliance warning", value: <span className="block max-w-56 whitespace-pre-line text-pretty">{textOrDash(work.compliance_explanation)}</span> },
           ]}
         />
         <EvidencePanel work={work} />

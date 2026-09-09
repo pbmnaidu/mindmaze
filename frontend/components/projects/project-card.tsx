@@ -19,7 +19,7 @@ export function ProjectCard({ work }: { work: WorkRecord }) {
             {work.work_id}
             <span className="sr-only">, view details</span>
           </Link>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{work.work_category}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">{work.main_sector || work.work_domain || work.effective_work_category}</p>
         </div>
         <RiskBadge level={work.overall_risk_level} />
       </div>

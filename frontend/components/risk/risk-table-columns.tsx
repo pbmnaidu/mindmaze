@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { RiskBadge } from "./risk-badge";
 import { RiskScore } from "./risk-score";
 import { WorkId } from "./work-id";
@@ -45,7 +43,7 @@ export const riskTableColumns: ColumnDef<WorkRecord>[] = [
   },
   {
     id: "category",
-    accessorKey: "work_category",
+    accessorKey: "main_sector",
     header: "Category",
     meta: { label: "Category" },
     cell: ({ getValue }) => <span className="block max-w-40 truncate" title={getValue<string>()}>{getValue<string>()}</span>,
@@ -70,13 +68,6 @@ export const riskTableColumns: ColumnDef<WorkRecord>[] = [
     header: "Financial",
     meta: { label: "Financial risk", align: "right" },
     cell: ({ row }) => <RiskScore score={row.original.financial_risk_score} level={row.original.financial_risk_level} />,
-  },
-  {
-    id: "vendor",
-    accessorKey: "vendor_risk_score",
-    header: "Vendor",
-    meta: { label: "Vendor risk", align: "right" },
-    cell: ({ row }) => <RiskScore score={row.original.vendor_risk_score} level={row.original.vendor_risk_level} />,
   },
   {
     id: "duplicate",
@@ -111,19 +102,5 @@ export const riskTableColumns: ColumnDef<WorkRecord>[] = [
       return (order[a.original.overall_risk_level] ?? -1) - (order[b.original.overall_risk_level] ?? -1);
     },
     cell: ({ row }) => <RiskBadge level={row.original.overall_risk_level} />,
-  },
-  {
-    id: "action",
-    header: "Action",
-    meta: { label: "Action", align: "right" },
-    enableHiding: false,
-    enableSorting: false,
-    cell: ({ row }) => (
-      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-        <Link href={`/projects/${encodeURIComponent(row.original.work_id)}`} aria-label={`View details for ${row.original.work_id}`}>
-          View
-        </Link>
-      </Button>
-    ),
   },
 ];

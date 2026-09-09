@@ -40,7 +40,7 @@ export function WorksList({ title, description, works, metric, level, detail, em
                     <p className="truncate text-xs text-muted-foreground" title={w.description}>
                       {toTitleCase(w.State ?? w.state)} · {toTitleCase(w.Constituency ?? w.constituency)} · {w.work_category}
                     </p>
-                    {d && <p className="text-xs text-foreground text-pretty">{d}</p>}
+                    {d && <p className="whitespace-pre-line text-xs text-foreground text-pretty">{d}</p>}
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end">
                     <div className="text-right">

@@ -10,7 +10,6 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { ANALYTICS_SAMPLE_SIZE } from "@/lib/api/analytics";
 import { formatNumber } from "@/lib/utils/format";
 import { FinancialSection } from "./financial-section";
-import { VendorSection } from "./vendor-section";
 import { PaymentSection } from "./payment-section";
 import { DuplicateSection } from "./duplicate-section";
 import { ComplianceSection } from "./compliance-section";
@@ -28,7 +27,7 @@ export function AnalyticsView() {
     <>
       <PageHeader
         title="Analytics"
-        description={`${level}-level pattern analysis within ${label}, across financial, vendor, payment, duplicate, and compliance indicators.`}
+        description={`${level}-level pattern analysis within ${label}, across financial, duplicate, payment, and compliance indicators.`}
       />
 
       <DataSourceNotice source={analytics.data?.source} />
@@ -39,7 +38,7 @@ export function AnalyticsView() {
           <p>
             <span className="font-medium text-foreground">Basis of analysis.</span> Distribution and state/category
             figures come from the active monitoring scope over {formatNumber(data.overview.summary.total_works)} works. Record-level
-            patterns (peer ratios, vendor shares, disbursal, compliance) are computed from the{" "}
+            patterns (peer ratios, disbursal, compliance) are computed from the{" "}
             <span className="font-medium text-foreground">top {formatNumber(Math.min(ANALYTICS_SAMPLE_SIZE, data.works.length))} prioritized works</span>{" "}
             returned by the risk engine, not the full dataset.
           </p>
@@ -57,7 +56,6 @@ export function AnalyticsView() {
           <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0">
             {[
               ["financial", "Financial anomalies"],
-              ["vendor", "Vendor analysis"],
               ["payment", "Payment analysis"],
               ["duplicate", "Duplicate analysis"],
               ["compliance", "Compliance"],
@@ -72,7 +70,6 @@ export function AnalyticsView() {
             ))}
           </TabsList>
           <TabsContent value="financial"><FinancialSection data={data!} /></TabsContent>
-          <TabsContent value="vendor"><VendorSection data={data!} /></TabsContent>
           <TabsContent value="payment"><PaymentSection data={data!} /></TabsContent>
           <TabsContent value="duplicate"><DuplicateSection data={data!} /></TabsContent>
           <TabsContent value="compliance"><ComplianceSection data={data!} /></TabsContent>

@@ -13,6 +13,7 @@ interface DataTableProps<TData> {
   emptyState?: React.ReactNode;
   skeletonRows?: number;
   className?: string;
+  onRowClick?: (row: import("@tanstack/react-table").Row<TData>) => void;
 }
 
 /**
@@ -20,12 +21,12 @@ interface DataTableProps<TData> {
  * buttons are rendered for columns with `enableSorting` (client-side, within
  * the current server page). Column visibility is controlled by the caller.
  */
-export function DataTable<TData>({ table, isLoading, emptyState, skeletonRows = 8, className }: DataTableProps<TData>) {
+export function DataTable<TData>({ table, isLoading, emptyState, skeletonRows = 8, className, onRowClick }: DataTableProps<TData>) {
   const columnCount = table.getVisibleLeafColumns().length;
   const rows = table.getRowModel().rows;
 
   return (
-    <div className={cn("w-full overflow-x-auto", className)}>
+    <div className={cn("w-full overflow-x-scroll", className)}>
       <Table className="min-w-max text-xs">
         <TableHeader className="bg-muted/60">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -83,7 +84,19 @@ export function DataTable<TData>({ table, isLoading, emptyState, skeletonRows = 
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-accent/40">
+              <TableRow
+                key={row.id}
+                className={cn("hover:bg-accent/40", onRowClick && "cursor-pointer focus-visible:outline-2 focus-visible:outline-ring")}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? "link" : undefined}
+                onClick={() => onRowClick?.(row)}
+                onKeyDown={(event) => {
+                  if (onRowClick && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    onRowClick(row);
+                  }
+                }}
+              >
                 {row.getVisibleCells().map((cell) => {
                   const align = (cell.column.columnDef.meta as { align?: string } | undefined)?.align;
                   return (

@@ -28,7 +28,7 @@ export function ProjectHeader({ work }: { work: WorkRecord }) {
             </div>
             <div>
               <dt className="text-muted-foreground">Category</dt>
-              <dd className="font-medium">{textOrDash(work.work_category)}</dd>
+              <dd className="font-medium">{textOrDash(work.main_sector || work.work_domain || work.effective_work_category)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Member of Parliament</dt>

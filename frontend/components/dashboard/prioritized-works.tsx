@@ -68,7 +68,7 @@ export function PrioritizedWorks({ works, isLoading, title = "Prioritized works"
                       <TableCell className="py-2.5"><WorkId id={work.work_id} /></TableCell>
                       <TableCell className="py-2.5">{toTitleCase(work.State ?? work.state)}</TableCell>
                       <TableCell className="py-2.5">{toTitleCase(work.Constituency ?? work.constituency)}</TableCell>
-                      <TableCell className="py-2.5 max-w-44 truncate">{work.work_category}</TableCell>
+                      <TableCell className="py-2.5 max-w-44 truncate">{work.main_sector || work.work_domain || work.effective_work_category}</TableCell>
                       <TableCell className="py-2.5 text-right"><RiskScore score={work.composite_risk_score} level={work.overall_risk_level} /></TableCell>
                       <TableCell className="py-2.5"><RiskBadge level={work.overall_risk_level} /></TableCell>
                       <TableCell className="py-2.5">

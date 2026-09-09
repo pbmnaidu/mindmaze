@@ -1,0 +1,18 @@
+Sector_ID,Main_Sector,Sub_Sector,Asset_Type,Base_Avg_Cost_INR,UP_Bihar_Plains_Mult,Hill_NE_State_Mult,South_Urban_Mult,West_Industrial_Mult,Avg_Days,Primary_Anomaly_Risk
+SEC01,Drinking Water,Tube Well & Hand Pump,Procurement,75000,0.95,1.40,1.05,1.10,15,Invoice Inflation / Ghost Asset
+SEC01,Drinking Water,Piped Water System,Infrastructure,1200000,1.00,1.60,1.15,1.10,90,Overlapping Site Duplication
+SEC02,Education,Primary School Classroom,Heavy Construction,550000,0.90,1.45,1.10,1.15,180,Project Splitting
+SEC02,Education,School Computer Lab,Procurement,500000,0.95,1.25,1.10,1.05,30,Hardware Vendor Kickbacks
+SEC03,Public Health,Sub-Centre Building,Heavy Construction,2200000,0.90,1.50,1.15,1.20,240,Delayed Completion / Cost Escalate
+SEC03,Public Health,Government Ambulance,Procurement,1400000,1.00,1.15,1.05,1.00,45,Fake Registration / Paper Only
+SEC04,Roads & Pathways,Concrete Village Road (Per KM),Heavy Construction,1800000,0.95,1.70,1.20,1.15,120,Double-Billing / Existing Road Photo
+SEC04,Roads & Pathways,Culvert / Small Bridge,Heavy Construction,750000,0.90,1.65,1.10,1.15,90,Material Substitution / Substandard
+SEC05,Electricity,Solar Street Lights (Per Unit),Procurement,24000,0.90,1.30,1.05,1.00,15,Phantom Inventory Counts
+SEC05,Electricity,High Mast Light System (12m/9-Light),Procurement,450000,0.95,1.35,1.10,1.05,30,Back-to-Back Project Splitting
+SEC05,Electricity,High Mast Light System (9m/3-Light),Procurement,180000,0.95,1.35,1.10,1.05,20,Out-of-Order Fast-Tracking
+SEC06,Agriculture,Common Storage Godown,Heavy Construction,2500000,0.90,1.55,1.15,1.15,270,Fake NGO / Trust Ownership Fraud
+SEC07,Irrigation & Floods,Check Dam Construction,Heavy Construction,1500000,0.95,1.60,1.10,1.10,150,Paper-Only Earthwork / No Real Asset
+SEC08,Sports & Youth,Open Gym & Playground Development,Procurement,450000,0.90,1.25,1.15,1.10,30,Equipment Maintenance Kickbacks
+SEC09,Railways,Passenger Platform Shelter,Heavy Construction,900000,1.00,1.40,1.10,1.10,90,Jurisdictional Delay Stalling
+SEC10,Community Buildings,Community Hall / Sansad Bhavan,Heavy Construction,1500000,0.90,1.50,1.15,1.20,210,Rapid Payout / Paper Completion
+SEC11,Public Safety,Strategic Intersection CCTV Network,Procurement,600000,0.95,1.30,1.15,1.10,45,Overpriced Software & Hardware Fees

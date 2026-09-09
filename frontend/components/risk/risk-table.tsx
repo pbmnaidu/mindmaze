@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -42,6 +43,7 @@ export function RiskTable({
   onReset,
   defaultHidden = {},
 }: RiskTableProps) {
+  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defaultHidden);
 
@@ -90,6 +92,7 @@ export function RiskTable({
             }
           />
         }
+        onRowClick={(row) => router.push(`/projects/${encodeURIComponent(row.original.work_id)}`)}
       />
       <PaginationControls
         page={page}

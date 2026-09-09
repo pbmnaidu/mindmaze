@@ -11,19 +11,19 @@ export function CategoryRiskChart({ categories }: { categories: CategorySummary[
     .slice()
     .sort((a, b) => b.high_risk_works - a.high_risk_works || b.total_works - a.total_works)
     .map((c) => ({
-      category: c.work_category,
+      category: c.main_sector,
       "High risk works": c.high_risk_works,
       "Total works": c.total_works,
     }));
 
   return (
     <ChartCard
-      question="Which work categories concentrate risk?"
-      title="Category-wise high-risk works"
-      description="Works carrying high or critical risk indicators per category. Hover to see the category's total works for scale."
+      question="Which sectors concentrate review priority?"
+      title="Sector-wise high-risk works"
+      description="Works carrying high or critical risk indicators per classified sector. Hover to see the sector's total works for scale."
     >
       {data.length === 0 ? (
-        <ChartEmpty message="Category-wise data is not available from the service." />
+        <ChartEmpty message="Sector-wise data is not available from the service." />
       ) : (
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">

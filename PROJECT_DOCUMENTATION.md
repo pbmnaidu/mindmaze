@@ -5,11 +5,10 @@
 The **MPLADS AI Monitoring & Risk Intelligence Platform** is an evidence-driven, analytical decision-support system designed to assist government officials, financial auditors, and administrative authorities in monitoring funds allocated under the **Member of Parliament Local Area Development Scheme (MPLADS)**.
 
 ### Core System Philosophy
-- **Decision Support, Not Legal Adjudication**: The platform acts as an early-warning monitoring system. It identifies statistical anomalies, expenditure outliers, vendor concentrations, candidate duplicate works, and compliance evidence gaps requiring human review.
+- **Decision Support, Not Legal Adjudication**: The platform acts as an early-warning monitoring system. It identifies statistical anomalies, expenditure outliers, candidate duplicate works, and compliance evidence gaps requiring human review.
 - **Responsible AI Governance Language**: The system avoids non-adjudicated labels such as *"Fraud Detected"*, *"Corrupt Project"*, or *"Fraudulent Vendor"*. It uses strict governance terminology:
   - *Risk Indicator*
   - *Financial Risk*
-  - *Vendor Risk*
   - *Candidate Duplicate Pair*
   - *Compliance Evidence Gap*
   - *Potential Anomaly*
@@ -43,10 +42,10 @@ The **MPLADS AI Monitoring & Risk Intelligence Platform** is an evidence-driven,
         v                         v               v                         v
 +---------------+       +---------------+   +---------------+       +---------------+
 | MODULE 2:     |       | MODULE 3:     |   | MODULE 4:     |       | MODULE 5:     |
-| Financial     |       | Vendor Risk   |   | Duplicate     |       | Compliance    |
-| Anomaly       |       | Engine        |   | NLP Engine    |       | Matrix        |
-| Engine        |       | (Market Share |   | (TF-IDF &     |       | (4 Rules)     |
-| (IQR & ML)    |       | & Bursts)     |   | Cosine Sim)   |       |               |
+| Financial     |       | Sector/NLP    |   | Duplicate     |       | Compliance    |
+| Anomaly       |       | Classifier    |   | NLP Engine    |       | Matrix        |
+| Engine        |       | (TF-IDF + SVM)|   | (TF-IDF &     |       | (4 Rules)     |
+| (IQR & ML)    |       |              |   | Cosine Sim)   |       |               |
 +---------------+       +---------------+   +---------------+       +---------------+
         |                         |               |                         |
         +-------------------------+-------+-------+-------------------------+
@@ -54,7 +53,7 @@ The **MPLADS AI Monitoring & Risk Intelligence Platform** is an evidence-driven,
                                           v
 +-----------------------------------------------------------------------------------+
 | MASTER COMPOSITE RISK ENGINE                                                      |
-| Score = (0.35 * Fin) + (0.25 * Ven) + (0.25 * Dup) + (0.15 * Comp)                |
+| Score = (0.40 * Comp) + (0.35 * Fin) + (0.23 * Dup) + (0.02 * Material)             |
 +-----------------------------------------------------------------------------------+
                                           |
                                           v
@@ -115,26 +114,26 @@ The **MPLADS AI Monitoring & Risk Intelligence Platform** is an evidence-driven,
 ### Module 2: Financial Anomaly Engine (`src/modules/financial_anomaly.py`)
 Identifies expenditure anomalies by comparing project costs against localized peer baselines.
 
-1. **Peer Group Grouping**: Works are grouped by `(State, Work Category)`.
-2. **Peer Ratio Formula**:
+1. **Description classification**: The description is normalized, related words are standardized/stemmed, and TF-IDF + linear SVM assigns the supplied sector and sub-sector taxonomy.
+2. **Quantity-aware reference cost**: Explicit quantities, such as 9 poles, are multiplied by the reference per-unit cost and regional multiplier. Ambiguous subtypes use a reference range rather than an invented subtype.
+3. **Peer Group Grouping**: Works are grouped by `(State, classified sector/sub-sector)`.
+4. **Peer Ratio Formula**:
    $$\text{Peer Ratio} = \frac{\text{Sanction Budget}}{\text{Peer Group Median(State, Category)}}$$
-3. **Interquartile Range (IQR) Outlier Upper Fence**:
+5. **Interquartile Range (IQR) Outlier Upper Fence**:
    $$\text{IQR} = Q3 - Q1$$
    $$\text{Upper Bound} = Q3 + (1.5 \times \text{IQR})$$
-4. **Isolation Forest Machine Learning**: Unsupervised tree model trained on financial feature space `[sanction_amount, effective_expenditure, peer_ratio, max_payment, single_payment_share]`.
-5. **Output**: Flagged **3,722 works with Financial Risk Score $\ge 65$**, including **1,124 CRITICAL cases ($\ge 85$)**.
+6. **Financial risk decision**: A quantity-backed cost inside its valid reference range does not receive financial risk merely because the broad peer median is lower. Exceeding the valid reference maximum creates a financial signal; without a valid reference range, peer ratio, percentile, and IQR signals are used.
+7. **Isolation Forest**: A secondary multivariate check uses sanction amount, effective expenditure, peer ratio, payment count, and expenditure-to-sanction ratio.
+8. **Output**: The financial score is a review-priority indicator, not a finding of wrongdoing.
 
 ---
 
-### Module 3: Vendor Risk Engine (`src/modules/vendor_risk.py`)
-Identifies contractor payment concentration and rapid disbursal behavior within parliamentary constituencies.
+### Module 3: Sector and NLP Classification Engine (`src/modules/sector_classifier.py`)
+Assigns every work to the supplied sector and sub-sector taxonomy from its description.
 
-1. **Herfindahl-Hirschman Market Concentration Index (HHI)**:
-   $$\text{HHI} = \sum_{i=1}^{n} \left(\frac{\text{Vendor Expenditure}_i}{\text{Constituency Total Expenditure}} \times 100\right)^2$$
-2. **Payment Frequency Burst Detection**: Detects multiple payment disbursals released to the same vendor within a 7-day window.
-3. **Single Disbursal Ratio**:
-   $$\text{Single Disbursal Ratio} = \frac{\text{Maximum Payment}}{\text{Total Expenditure}} \times 100$$
-4. **Output**: Flagged **1,120 works with High Vendor Risk Score $\ge 65$**.
+1. **Text normalization**: Related words are standardized and stemmed before vectorization.
+2. **TF-IDF + linear SVM**: The classifier uses description features to assign sector and sub-sector.
+3. **Output**: The assigned class and confidence become the financial peer-group keys.
 
 ---
 
@@ -151,14 +150,9 @@ Detects candidate duplicate or highly similar works within the same constituency
 ---
 
 ### Module 5: Compliance Matrix Engine (`src/modules/compliance_engine.py`)
-Evaluates administrative and data-quality completeness against 4 deterministic rules.
+Evaluates the 12 NIRIKSHAN administrative, timing, progress, financial-consistency, and data-quality rules. C01, C02, C03, and C07 are critical; C04 is compliant; C06 is monitored. C02 checks the same normalized work description and constituency/location within 180 days. Image verification is optional and is not a failure by itself.
 
-1. **`RULE_COMP_01` (Missing Evidence Image)**: Completed work missing asset inspection photo (+40 points). Flagged **4,187 cases**.
-2. **`RULE_COMP_02` (Chronological Sequence Violation)**: Sanction date recorded before recommendation, or completion before sanction (+50 points).
-3. **`RULE_COMP_03` (Incomplete Description)**: Description string length $< 15$ characters (+25 points).
-4. **`RULE_COMP_04` (Zero Expenditure Disbursal)**: Work marked completed but recorded expenditure $\le 0$ (+25 points).
-5. **Formula**:
-   $$\text{Compliance Risk Score} = \min\Big(100, \, (\text{R1} \times 40) + (\text{R2} \times 50) + (\text{R3} \times 25) + (\text{R4} \times 25)\Big)$$
+Rules evaluated: C01 recommendation-to-sanction delay; C02 repeat recommendation within 180 days; C03 completion under 15 days; C04 normal completion from 15 days to one year; C05 no progress after one year; C06 partial progress allowed to 18 months; C07 incomplete beyond 18 months; C08 date order; C09 expenditure consistency; C10 invalid financial data; C11 required fields; and C12 completion-status consistency.
 
 ---
 
@@ -166,7 +160,7 @@ Evaluates administrative and data-quality completeness against 4 deterministic r
 
 Synthesizes all individual module outputs into an auditable Composite Risk Score (0 to 100):
 
-$$\text{Composite Risk Score} = (0.35 \times S_{\text{financial}}) + (0.25 \times S_{\text{vendor}}) + (0.25 \times S_{\text{duplicate}}) + (0.15 \times S_{\text{compliance}})$$
+$$\text{Composite Risk Score} = (0.40 \times S_{\text{compliance}}) + (0.35 \times S_{\text{financial}}) + (0.23 \times S_{\text{duplicate}}) + (0.02 \times S_{\text{material}})$$
 
 ### Risk Severity Cutoffs
 - **LOW**: Score $0.0 - 34.99$ (74,117 Works) — Normal baseline.
@@ -209,4 +203,4 @@ Runs asynchronously on `http://127.0.0.1:8000`:
 2. **Step 2 — Queue Filtering**: Click *Risk Intelligence Monitor*. Filter severity to `HIGH (65-84 Score)` to display top priority audit cases.
 3. **Step 3 — Inspect Flagged Work**: Click **Inspect** on Work ID `WS/MP792/2024-2025/176431`.
 4. **Step 4 — Present Evidence**: Show the *Risk Evidence Panel* explaining that the project budget (₹85.94 Lakh) is **$37.1\times$ higher than the peer group median** (₹2.32 Lakh) and sits in the top 0.1% percentile.
-5. **Step 5 — Explain Methodology**: Open *Analytical Methodology* to demonstrate complete mathematical transparency $(0.35 \cdot S_{\text{fin}} + 0.25 \cdot S_{\text{ven}} + 0.25 \cdot S_{\text{dup}} + 0.15 \cdot S_{\text{comp}})$.
+5. **Step 5 — Explain Methodology**: Open *Analytical Methodology* to demonstrate the description classification, quantity-aware reference cost, peer baseline, duplicate, compliance, and normalized composite calculations.

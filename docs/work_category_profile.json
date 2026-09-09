@@ -1,0 +1,42 @@
+{
+  "rows": 79068,
+  "unique_original_categories": 12,
+  "generic_category_rows": 0,
+  "missing_description_rows": 99,
+  "category_frequency": {
+    "Education": 20798,
+    "Other / Unclassified": 19844,
+    "Electricity": 14555,
+    "Roads & Pathways": 11067,
+    "Drinking Water": 5681,
+    "Community Buildings": 3822,
+    "Sports & Youth": 1588,
+    "Public Health": 999,
+    "Irrigation & Floods": 341,
+    "Public Safety": 252,
+    "Railways": 86,
+    "Agriculture": 35
+  },
+  "effective_category_frequency": {
+    "Primary School Classroom": 20770,
+    "Unclassified": 19844,
+    "Concrete Village Road (Per KM)": 10331,
+    "High Mast Light System (Unspecified)": 7412,
+    "Street Light System (Unspecified)": 4319,
+    "Community Hall / Sansad Bhavan": 3822,
+    "Piped Water System": 3204,
+    "Solar Street Lights (Per Unit)": 2817,
+    "Tube Well & Hand Pump": 2477,
+    "Open Gym & Playground Development": 1588,
+    "Sub-Centre Building": 740,
+    "Culvert / Small Bridge": 736,
+    "Check Dam Construction": 341,
+    "Government Ambulance": 259,
+    "Strategic Intersection CCTV Network": 252,
+    "Passenger Platform Shelter": 86,
+    "Common Storage Godown": 35,
+    "School Computer Lab": 28,
+    "High Mast Light System (9m/3-Light)": 4,
+    "High Mast Light System (12m/9-Light)": 3
+  }
+}

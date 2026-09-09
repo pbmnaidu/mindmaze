@@ -31,6 +31,11 @@ def run_duplicate_work_detection():
         
     print("=== EXECUTING MODULE 4: POTENTIAL DUPLICATE WORK ENGINE (NLP) ===")
     df = pd.read_parquet(t4_path)
+    if os.path.exists(master_path):
+        categories = pd.read_parquet(master_path, columns=["work_id", "effective_work_category"])
+        df = df.merge(categories, on="work_id", how="left")
+    else:
+        df["effective_work_category"] = "Other / Unclassified"
     print(f"Loaded sanctioned works base: {len(df):,} records")
 
     # 1. Clean & Filter Descriptions
@@ -44,10 +49,10 @@ def run_duplicate_work_detection():
     
     # 2. Group comparison by State & Constituency to avoid O(N^2) explosion
     print("Performing TF-IDF & Cosine Similarity vector search per constituency block...")
-    groups = df_valid.groupby(["state", "constituency"])
+    groups = df_valid.groupby(["state", "constituency", "effective_work_category"])
     
     group_count = 0
-    for (state, const), group in groups:
+    for (state, const, category), group in groups:
         if len(group) < 2:
             continue
             
@@ -78,6 +83,9 @@ def run_duplicate_work_detection():
                         "work_id_2": work_ids[c],
                         "state": state,
                         "constituency": const,
+                        "effective_work_category_1": category,
+                        "effective_work_category_2": category,
+                        "category_compatibility": "COMPATIBLE",
                         "similarity_score": sim_score,
                         "sanction_amount_1": amounts[r],
                         "sanction_amount_2": amounts[c],
@@ -103,7 +111,7 @@ def run_duplicate_work_detection():
 
         pairs_df["duplicate_risk_level"] = pairs_df["similarity_score"].apply(assign_dup_level)
         pairs_df["nlp_explanation"] = pairs_df.apply(
-            lambda r: f"High semantic description overlap ({r['similarity_score']:.1f}% match) with Work ID '{r['work_id_2']}' in {r['constituency']}",
+            lambda r: f"These two work descriptions are {r['similarity_score']:.1f}% similar in {r['constituency']}. Check whether they are the same work.",
             axis=1
         )
 

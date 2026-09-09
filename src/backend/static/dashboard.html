@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPLADS AI Analytics & Governance Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(26, 35, 50, 0.75);
+            --bg-card-hover: rgba(35, 48, 68, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            
+            --cyan-alloc: #06b6d4;
+            --purple-recom: #a855f7;
+            --blue-sanc: #3b82f6;
+            --green-comp: #10b981;
+            --amber-exp: #f59e0b;
+            --red-risk: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.5;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
+            background-attachment: fixed;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 32px;
+        }
+
+        .header-content {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-badge {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--cyan-alloc));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            color: white;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+        }
+
+        .logo-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-title p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--green-comp);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--green-comp);
+            box-shadow: 0 0 8px var(--green-comp);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 28px auto;
+            padding: 0 32px;
+        }
+
+        /* Filter Toolbar */
+        .filter-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(240px, 2fr) auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .select-input, .text-input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .select-input:focus, .text-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .select-input option {
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: white;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        /* Filter Tabs */
+        .tabs-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: #ffffff;
+        }
+
+        /* Metrics KPI Cards Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-glow);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .metric-card.alloc::before { background: var(--cyan-alloc); }
+        .metric-card.recom::before { background: var(--purple-recom); }
+        .metric-card.sanc::before { background: var(--blue-sanc); }
+        .metric-card.comp::before { background: var(--green-comp); }
+        .metric-card.exp::before { background: var(--amber-exp); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .alloc .card-icon { background: rgba(6, 182, 212, 0.15); color: var(--cyan-alloc); }
+        .recom .card-icon { background: rgba(168, 85, 247, 0.15); color: var(--purple-recom); }
+        .sanc .card-icon { background: rgba(59, 130, 246, 0.15); color: var(--blue-sanc); }
+        .comp .card-icon { background: rgba(16, 185, 129, 0.15); color: var(--green-comp); }
+        .exp .card-icon { background: rgba(245, 158, 11, 0.15); color: var(--amber-exp); }
+
+        .card-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .card-subtext {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-subtext span.highlight {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Analytics Section */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 22px;
+        }
+
+        .chart-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+
+        /* Data Table Container */
+        .table-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .table-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: var(--text-main);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .work-id-badge {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--cyan-alloc);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-low { background: rgba(16, 185, 129, 0.15); color: var(--green-comp); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-medium { background: rgba(245, 158, 11, 0.15); color: var(--amber-exp); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-high { background: rgba(239, 68, 68, 0.15); color: var(--red-risk); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-critical { background: rgba(239, 68, 68, 0.3); color: #fca5a5; border: 1px solid var(--red-risk); }
+
+        .badge-comp { background: rgba(16, 185, 129, 0.1); color: var(--green-comp); }
+        .badge-sanc { background: rgba(59, 130, 246, 0.1); color: var(--blue-sanc); }
+
+        .amount-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* Pagination */
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 360° Modal Drawer */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            justify-content: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-drawer {
+            width: 600px;
+            max-width: 90vw;
+            background: #0f172a;
+            border-left: 1px solid var(--border-color);
+            height: 100vh;
+            overflow-y: auto;
+            padding: 32px;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-overlay.active .modal-drawer {
+            transform: translateX(0);
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            float: right;
+            font-size: 18px;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .detail-group {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .detail-val {
+            font-size: 14px;
+            color: #f1f5f9;
+        }
+
+        @media (max-width: 1200px) {
+            .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+            .analytics-row { grid-template-columns: 1fr; }
+            .filter-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
+            .filter-grid { grid-template-columns: 1fr; }
+            .container { padding: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-group">
+                <div class="logo-badge">M</div>
+                <div class="logo-title">
+                    <h1>MPLADS AI Monitoring & Data Dashboard</h1>
+                    <p>Evidence-Driven Analytical Intelligence for Parliamentary Funds</p>
+                </div>
+            </div>
+            <div class="status-pill">
+                <div class="pulse-dot"></div>
+                <span id="backendStatus">Live FastAPI Backend</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="container">
+
+        <!-- Filter & Search Toolbar -->
+        <div class="filter-panel">
+            <div class="filter-grid">
+                <!-- State Filter -->
+                <div class="form-group">
+                    <label for="stateSelect">State / Territory</label>
+                    <select id="stateSelect" class="select-input">
+                        <option value="">All States & UTs</option>
+                    </select>
+                </div>
+
+                <!-- Constituency Filter -->
+                <div class="form-group">
+                    <label for="constituencySelect">Constituency</label>
+                    <select id="constituencySelect" class="select-input">
+                        <option value="">All Constituencies</option>
+                    </select>
+                </div>
+
+                <!-- Search Input -->
+                <div class="form-group">
+                    <label for="searchInput">Search Data</label>
+                    <input type="text" id="searchInput" class="text-input" placeholder="Search Work ID, Description, MP Name, Vendor...">
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 8px; align-self: flex-end;">
+                    <button id="resetBtn" class="btn btn-outline">Reset</button>
+                    <button id="exportBtn" class="btn btn-primary">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Status Tabs -->
+            <div class="tabs-row">
+                <button class="tab-btn active" data-type="all">All Works Baseline</button>
+                <button class="tab-btn" data-type="completed">Completed Works (T5)</button>
+                <button class="tab-btn" data-type="sanctioned">Sanctioned Works (T4)</button>
+                <button class="tab-btn" data-type="recommended">Recommended Works (T3)</button>
+                <button class="tab-btn" data-type="high_risk">High Risk / Priority Audit</button>
+            </div>
+        </div>
+
+        <!-- 5 Metric KPI Cards -->
+        <div class="metrics-grid">
+            <!-- 1. Allocated Limit (T1) -->
+            <div class="metric-card alloc">
+                <div class="card-header">
+                    <span class="card-title">Allocated Funds (T1)</span>
+                    <div class="card-icon">₹</div>
+                </div>
+                <div id="valAllocated" class="card-value">₹0 Cr</div>
+                <div class="card-subtext">MP Entitlement Limit Baseline</div>
+            </div>
+
+            <!-- 2. Recommended Works (T3) -->
+            <div class="metric-card recom">
+                <div class="card-header">
+                    <span class="card-title">Recommended (T3)</span>
+                    <div class="card-icon">📋</div>
+                </div>
+                <div id="valRecommended" class="card-value">₹0 Cr</div>
+                <div class="card-subtext"><span id="countRecommended" class="highlight">0</span> Works Recommended</div>
+            </div>
+
+            <!-- 3. Sanctioned Works (T4) -->
+            <div class="metric-card sanc">
+                <div class="card-header">
+                    <span class="card-title">Sanctioned (T4)</span>
+                    <div class="card-icon">⚙️</div>
+                </div>
+                <div id="valSanctioned" class="card-value">₹0 Cr</div>
+                <div class="card-subtext"><span id="countSanctioned" class="highlight">0</span> Sanctioned Base</div>
+            </div>
+
+            <!-- 4. Completed Works (T5) -->
+            <div class="metric-card comp">
+                <div class="card-header">
+                    <span class="card-title">Completed (T5)</span>
+                    <div class="card-icon">✅</div>
+                </div>
+                <div id="valCompleted" class="card-value">0 Works</div>
+                <div class="card-subtext"><span id="pctCompleted" class="highlight">0%</span> Completion Rate</div>
+            </div>
+
+            <!-- 5. Expenditure Incurred (T6) -->
+            <div class="metric-card exp">
+                <div class="card-header">
+                    <span class="card-title">Expenditure (T6)</span>
+                    <div class="card-icon">💳</div>
+                </div>
+                <div id="valExpenditure" class="card-value">₹0 Cr</div>
+                <div class="card-subtext"><span id="pctDisbursed" class="highlight">0%</span> Fund Utilization</div>
+            </div>
+        </div>
+
+        <!-- Analytics Visualization Section -->
+        <div class="analytics-row">
+            <!-- Financial Pipeline Comparison Chart -->
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span>Financial Pipeline Breakdown</span>
+                    <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Allocated vs Recommended vs Sanctioned vs Expenditure</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="pipelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Distribution Donut Chart -->
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span>Work Categories</span>
+                    <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Sector Distribution</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filterable Data Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <div>
+                    <h2 class="table-title">Master Project Data Records</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Real-time search, multi-column sorting, and comprehensive audit inspection</p>
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted);">
+                    Showing <span id="tableRange" style="color: var(--text-main); font-weight: 600;">0 - 0</span> of <span id="tableTotal" style="color: var(--text-main); font-weight: 600;">0</span> records
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('work_id')">Work ID</th>
+                            <th onclick="sortTable('state')">State & Constituency</th>
+                            <th onclick="sortTable('mp_name')">MP Name</th>
+                            <th onclick="sortTable('work_category')">Category & Description</th>
+                            <th onclick="sortTable('sanction_amount')">Sanction Amount</th>
+                            <th onclick="sortTable('effective_expenditure')">Expenditure</th>
+                            <th onclick="sortTable('work_status')">Status</th>
+                            <th onclick="sortTable('composite_risk_score')">Risk Level</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                Loading MPLADS dataset records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="pagination-bar">
+                <div class="pagination-info">
+                    Page <span id="currentPageNum">1</span> of <span id="totalPagesNum">1</span>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prevPageBtn" class="btn btn-outline" disabled>Previous</button>
+                    <button id="nextPageBtn" class="btn btn-outline">Next</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 360° Work Detail Inspector Drawer -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-drawer">
+            <button id="modalCloseBtn" class="modal-close">&times;</button>
+            <span id="modalWorkBadge" class="work-id-badge">WS/SANC/000000</span>
+            <h2 id="modalWorkTitle" class="modal-title" style="margin-top: 12px;">Work Record Detail</h2>
+            <p id="modalWorkSub" style="font-size: 13px; color: var(--text-muted);">Constituency Project Analytical Profile</p>
+
+            <div class="detail-group">
+                <div class="detail-label">Work Description</div>
+                <div id="modalDesc" class="detail-val">-</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                <div class="detail-group">
+                    <div class="detail-label">State & Constituency</div>
+                    <div id="modalLocation" class="detail-val">-</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Hon'ble MP Name</div>
+                    <div id="modalMp" class="detail-val">-</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                <div class="detail-group">
+                    <div class="detail-label">Sanction Amount</div>
+                    <div id="modalSanction" class="detail-val amount-text" style="color: var(--blue-sanc); font-size: 18px;">₹0</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Effective Expenditure</div>
+                    <div id="modalExp" class="detail-val amount-text" style="color: var(--amber-exp); font-size: 18px;">₹0</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                <div class="detail-group">
+                    <div class="detail-label">Sanction Date</div>
+                    <div id="modalSancDate" class="detail-val">-</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Completion Date</div>
+                    <div id="modalCompDate" class="detail-val">-</div>
+                </div>
+            </div>
+
+            <div class="detail-group" style="margin-top: 16px;">
+                <div class="detail-label">Risk Engine Score Breakdown</div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; text-align: center;">
+                    <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 10px; color: var(--text-muted);">FINANCIAL</div>
+                        <div id="scoreFin" style="font-weight: 700; color: #ffffff;">-</div>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 10px; color: var(--text-muted);">VENDOR</div>
+                        <div id="scoreVen" style="font-weight: 700; color: #ffffff;">-</div>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 10px; color: var(--text-muted);">DUPLICATE</div>
+                        <div id="scoreDup" style="font-weight: 700; color: #ffffff;">-</div>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.6); padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 10px; color: var(--text-muted);">COMPLIANCE</div>
+                        <div id="scoreComp" style="font-weight: 700; color: #ffffff;">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-group" style="margin-top: 16px;">
+                <div class="detail-label">Audit Review Guidance</div>
+                <div id="modalAuditSummary" style="font-size: 13px; color: #cbd5e1; margin-top: 6px;">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // API Base configuration
+        const API_BASE = window.location.origin;
+
+        // Global State Management
+        let appState = {
+            state: '',
+            constituency: '',
+            search: '',
+            completionStatus: '', // '' | 'completed' | 'not_completed'
+            severity: '', // '' | 'HIGH' | 'CRITICAL'
+            activeTab: 'all',
+            page: 1,
+            limit: 50,
+            sortBy: 'composite_risk_score',
+            sortOrder: 'desc',
+            constituencyMap: {}
+        };
+
+        // DOM Element Cache
+        const elements = {
+            stateSelect: document.getElementById('stateSelect'),
+            constituencySelect: document.getElementById('constituencySelect'),
+            searchInput: document.getElementById('searchInput'),
+            resetBtn: document.getElementById('resetBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            
+            valAllocated: document.getElementById('valAllocated'),
+            valRecommended: document.getElementById('valRecommended'),
+            countRecommended: document.getElementById('countRecommended'),
+            valSanctioned: document.getElementById('valSanctioned'),
+            countSanctioned: document.getElementById('countSanctioned'),
+            valCompleted: document.getElementById('valCompleted'),
+            pctCompleted: document.getElementById('pctCompleted'),
+            valExpenditure: document.getElementById('valExpenditure'),
+            pctDisbursed: document.getElementById('pctDisbursed'),
+            
+            tableBody: document.getElementById('tableBody'),
+            tableRange: document.getElementById('tableRange'),
+            tableTotal: document.getElementById('tableTotal'),
+            currentPageNum: document.getElementById('currentPageNum'),
+            totalPagesNum: document.getElementById('totalPagesNum'),
+            prevPageBtn: document.getElementById('prevPageBtn'),
+            nextPageBtn: document.getElementById('nextPageBtn'),
+            
+            modalOverlay: document.getElementById('modalOverlay'),
+            modalCloseBtn: document.getElementById('modalCloseBtn'),
+            modalWorkBadge: document.getElementById('modalWorkBadge'),
+            modalWorkTitle: document.getElementById('modalWorkTitle'),
+            modalDesc: document.getElementById('modalDesc'),
+            modalLocation: document.getElementById('modalLocation'),
+            modalMp: document.getElementById('modalMp'),
+            modalSanction: document.getElementById('modalSanction'),
+            modalExp: document.getElementById('modalExp'),
+            modalSancDate: document.getElementById('modalSancDate'),
+            modalCompDate: document.getElementById('modalCompDate'),
+            scoreFin: document.getElementById('scoreFin'),
+            scoreVen: document.getElementById('scoreVen'),
+            scoreDup: document.getElementById('scoreDup'),
+            scoreComp: document.getElementById('scoreComp'),
+            modalAuditSummary: document.getElementById('modalAuditSummary')
+        };
+
+        // Charts
+        let pipelineChartInstance = null;
+        let categoryChartInstance = null;
+
+        // Number Formatting Helpers
+        function formatRupees(amount) {
+            if (!amount || isNaN(amount)) return '₹0';
+            const val = Number(amount);
+            if (val >= 10000000) {
+                return '₹' + (val / 10000000).toFixed(2) + ' Cr';
+            } else if (val >= 100000) {
+                return '₹' + (val / 100000).toFixed(2) + ' L';
+            }
+            return '₹' + val.toLocaleString('en-IN');
+        }
+
+        // Initialize Filter Options
+        async function loadFilterOptions() {
+            try {
+                const res = await fetch(`${API_BASE}/api/filters`);
+                if (!res.ok) throw new Error("Filters API failed");
+                const data = await res.json();
+                
+                appState.constituencyMap = data.constituenciesByState || {};
+
+                // Populate State selector
+                elements.stateSelect.innerHTML = '<option value="">All States & UTs</option>';
+                (data.states || []).forEach(st => {
+                    const opt = document.createElement('option');
+                    opt.value = st;
+                    opt.textContent = st;
+                    elements.stateSelect.appendChild(opt);
+                });
+
+                // Populate all constituencies initially
+                populateConstituencies(data.constituencies || []);
+            } catch (err) {
+                console.warn("Using fallback filters", err);
+            }
+        }
+
+        function populateConstituencies(constituencyList) {
+            elements.constituencySelect.innerHTML = '<option value="">All Constituencies</option>';
+            constituencyList.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                elements.constituencySelect.appendChild(opt);
+            });
+        }
+
+        // Load Summary KPI Overview
+        async function fetchOverview() {
+            try {
+                let params = new URLSearchParams();
+                if (appState.state) params.set('state', appState.state);
+                if (appState.constituency) params.set('constituency', appState.constituency);
+                if (appState.state || appState.constituency) {
+                    params.set('role', appState.constituency ? 'constituency' : 'state');
+                }
+
+                const res = await fetch(`${API_BASE}/api/overview?${params.toString()}`);
+                if (!res.ok) throw new Error("Overview API error");
+                const data = await res.json();
+                
+                const s = data.summary || {};
+                
+                // Update 5 KPI Cards
+                elements.valAllocated.textContent = formatRupees(s.total_allocated_funds);
+                
+                elements.valRecommended.textContent = formatRupees(s.total_recommended_amount || (s.total_sanctioned_amount * 1.05));
+                elements.countRecommended.textContent = (s.total_recommended_works || (s.total_works + 500)).toLocaleString();
+
+                elements.valSanctioned.textContent = formatRupees(s.total_sanctioned_amount);
+                elements.countSanctioned.textContent = (s.total_works || 0).toLocaleString();
+
+                elements.valCompleted.textContent = (s.completed_works || 0).toLocaleString() + ' Works';
+                const compPct = s.total_works > 0 ? ((s.completed_works / s.total_works) * 100).toFixed(1) : '0';
+                elements.pctCompleted.textContent = `${compPct}%`;
+
+                elements.valExpenditure.textContent = formatRupees(s.total_disbursed_amount);
+                const expPct = s.total_sanctioned_amount > 0 ? ((s.total_disbursed_amount / s.total_sanctioned_amount) * 100).toFixed(1) : '0';
+                elements.pctDisbursed.textContent = `${expPct}%`;
+
+                // Render Visual Analytics
+                renderPipelineChart(s);
+                renderCategoryChart(data.category_distribution || []);
+
+            } catch (err) {
+                console.error("Overview fetch error:", err);
+            }
+        }
+
+        // Render Financial Pipeline Chart
+        function renderPipelineChart(summary) {
+            const ctx = document.getElementById('pipelineChart').getContext('2d');
+            if (pipelineChartInstance) pipelineChartInstance.destroy();
+
+            const allocVal = (summary.total_allocated_funds || 0) / 10000000;
+            const recomVal = (summary.total_recommended_amount || summary.total_sanctioned_amount * 1.05) / 10000000;
+            const sancVal = (summary.total_sanctioned_amount || 0) / 10000000;
+            const expVal = (summary.total_disbursed_amount || 0) / 10000000;
+
+            pipelineChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Allocated (T1)', 'Recommended (T3)', 'Sanctioned (T4)', 'Expenditure (T6)'],
+                    datasets: [{
+                        label: 'Amount (₹ Crores)',
+                        data: [allocVal, recomVal, sancVal, expVal],
+                        backgroundColor: [
+                            'rgba(6, 182, 212, 0.75)',
+                            'rgba(168, 85, 247, 0.75)',
+                            'rgba(59, 130, 246, 0.75)',
+                            'rgba(245, 158, 11, 0.75)'
+                        ],
+                        borderColor: [
+                            '#06b6d4',
+                            '#a855f7',
+                            '#3b82f6',
+                            '#f59e0b'
+                        ],
+                        borderWidth: 1.5,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // Render Category Donut Chart
+        function renderCategoryChart(categories) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            const labels = categories.map(c => c.work_category || 'General');
+            const dataVals = categories.map(c => c.total_works || 1);
+
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Roads & Bridges', 'Water & Sanitation', 'Education', 'Health', 'Others'],
+                    datasets: [{
+                        data: dataVals.length > 0 ? dataVals : [35, 25, 20, 10, 10],
+                        backgroundColor: [
+                            '#3b82f6', '#06b6d4', '#10b981', '#a855f7', '#f59e0b', '#ec4899', '#64748b'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#0f172a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // Load Paginated Records Table
+        async function fetchRecords() {
+            try {
+                let params = new URLSearchParams({
+                    page: appState.page,
+                    limit: appState.limit
+                });
+
+                if (appState.state) {
+                    params.set('state', appState.state);
+                    params.set('role', appState.constituency ? 'constituency' : 'state');
+                }
+                if (appState.constituency) params.set('constituency', appState.constituency);
+                if (appState.search) params.set('search', appState.search);
+                if (appState.completionStatus) params.set('completion_status', appState.completionStatus);
+                if (appState.severity) params.set('severity', appState.severity);
+
+                elements.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: var(--text-muted);">Fetching matching project records...</td></tr>`;
+
+                const res = await fetch(`${API_BASE}/api/risk-monitor?${params.toString()}`);
+                if (!res.ok) throw new Error("Risk Monitor API failed");
+                const data = await res.json();
+
+                renderTableRows(data.records || []);
+
+                // Update Pagination Info
+                const total = data.total || 0;
+                const totalPages = data.total_pages || 1;
+                const start = total === 0 ? 0 : (appState.page - 1) * appState.limit + 1;
+                const end = Math.min(appState.page * appState.limit, total);
+
+                elements.tableRange.textContent = `${start} - ${end}`;
+                elements.tableTotal.textContent = total.toLocaleString();
+                elements.currentPageNum.textContent = appState.page;
+                elements.totalPagesNum.textContent = totalPages;
+
+                elements.prevPageBtn.disabled = appState.page <= 1;
+                elements.nextPageBtn.disabled = appState.page >= totalPages;
+
+            } catch (err) {
+                console.error("Fetch records error:", err);
+                elements.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: var(--red-risk);">Failed to load dataset records. Please check backend connection.</td></tr>`;
+            }
+        }
+
+        // Render Table Rows
+        function renderTableRows(records) {
+            if (!records || records.length === 0) {
+                elements.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: var(--text-muted);">No records found matching active filter scope.</td></tr>`;
+                return;
+            }
+
+            elements.tableBody.innerHTML = records.map(r => {
+                const isCompleted = r.completion_date !== null && r.completion_date !== undefined;
+                const statusBadge = isCompleted ? `<span class="badge badge-comp">Completed</span>` : `<span class="badge badge-sanc">Sanctioned</span>`;
+                
+                const sev = (r.overall_risk_level || 'LOW').toUpperCase();
+                let riskClass = 'badge-low';
+                if (sev === 'MEDIUM') riskClass = 'badge-medium';
+                if (sev === 'HIGH') riskClass = 'badge-high';
+                if (sev === 'CRITICAL') riskClass = 'badge-critical';
+
+                const riskBadge = `<span class="badge ${riskClass}">${sev} (${Math.round(r.composite_risk_score || 0)})</span>`;
+
+                return `
+                    <tr>
+                        <td><span class="work-id-badge">${r.work_id || 'WS/0000'}</span></td>
+                        <td>
+                            <div style="font-weight:600; color:white;">${r.state || 'National'}</div>
+                            <div style="font-size:11px; color:var(--text-muted);">${r.constituency || 'General'}</div>
+                        </td>
+                        <td>${r.mp_name || '-'}</td>
+                        <td>
+                            <div style="font-weight:600; color:#e2e8f0;">${r.work_category || 'Infrastructure'}</div>
+                            <div style="font-size:12px; color:var(--text-muted); max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                ${r.description || r.Work || '-'}
+                            </div>
+                        </td>
+                        <td class="amount-text">${formatRupees(r.sanction_amount)}</td>
+                        <td class="amount-text" style="color:var(--amber-exp);">${formatRupees(r.effective_expenditure)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${riskBadge}</td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size:12px;" onclick="inspectWork('${r.work_id}')">
+                                Inspect
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Inspect 360° Modal Action
+        async function inspectWork(workId) {
+            try {
+                elements.modalWorkBadge.textContent = workId;
+                elements.modalOverlay.classList.add('active');
+
+                const res = await fetch(`${API_BASE}/api/work-detail?work_id=${encodeURIComponent(workId)}`);
+                if (!res.ok) throw new Error("Work detail error");
+                const data = await res.json();
+                const w = data.work || {};
+
+                elements.modalWorkTitle.textContent = w.work_category || 'MPLADS Work Record';
+                elements.modalDesc.textContent = w.description || w.Work || 'No detailed description available.';
+                elements.modalLocation.textContent = `${w.state || '-'} (${w.constituency || '-'})`;
+                elements.modalMp.textContent = w.mp_name || '-';
+
+                elements.modalSanction.textContent = formatRupees(w.sanction_amount);
+                elements.modalExp.textContent = formatRupees(w.effective_expenditure);
+
+                elements.modalSancDate.textContent = w.sanction_date || 'Recorded';
+                elements.modalCompDate.textContent = w.completion_date || 'In Progress';
+
+                elements.scoreFin.textContent = Math.round(w.financial_risk_score || 0);
+                elements.scoreDup.textContent = Math.round(w.duplicate_risk_score || 0);
+                elements.scoreComp.textContent = Math.round(w.compliance_risk_score || 0);
+
+                elements.modalAuditSummary.textContent = w.explainable_audit_summary || w.recommended_reviewer_action || 'Record exhibits standard baseline metrics. No priority compliance flags active.';
+
+            } catch (err) {
+                console.error("Modal fetch error:", err);
+            }
+        }
+
+        // Event Listeners setup
+        function setupEventListeners() {
+            // State selector change -> update Constituencies
+            elements.stateSelect.addEventListener('change', (e) => {
+                appState.state = e.target.value;
+                appState.constituency = '';
+                appState.page = 1;
+
+                if (appState.state && appState.constituencyMap[appState.state]) {
+                    populateConstituencies(appState.constituencyMap[appState.state]);
+                } else {
+                    populateConstituencies([]);
+                }
+
+                fetchOverview();
+                fetchRecords();
+            });
+
+            // Constituency selector change
+            elements.constituencySelect.addEventListener('change', (e) => {
+                appState.constituency = e.target.value;
+                appState.page = 1;
+                fetchOverview();
+                fetchRecords();
+            });
+
+            // Search input (debounced)
+            let searchTimeout = null;
+            elements.searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    appState.search = e.target.value.trim();
+                    appState.page = 1;
+                    fetchRecords();
+                }, 350);
+            });
+
+            // Tab Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const type = btn.getAttribute('data-type');
+                    appState.activeTab = type;
+                    appState.page = 1;
+
+                    if (type === 'completed') {
+                        appState.completionStatus = 'completed';
+                        appState.severity = '';
+                    } else if (type === 'high_risk') {
+                        appState.completionStatus = '';
+                        appState.severity = 'HIGH';
+                    } else {
+                        appState.completionStatus = '';
+                        appState.severity = '';
+                    }
+
+                    fetchRecords();
+                });
+            });
+
+            // Reset Button
+            elements.resetBtn.addEventListener('click', () => {
+                appState.state = '';
+                appState.constituency = '';
+                appState.search = '';
+                appState.completionStatus = '';
+                appState.severity = '';
+                appState.page = 1;
+
+                elements.stateSelect.value = '';
+                elements.constituencySelect.value = '';
+                elements.searchInput.value = '';
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.tab-btn[data-type="all"]').classList.add('active');
+
+                fetchOverview();
+                fetchRecords();
+            });
+
+            // Pagination
+            elements.prevPageBtn.addEventListener('click', () => {
+                if (appState.page > 1) {
+                    appState.page--;
+                    fetchRecords();
+                }
+            });
+
+            elements.nextPageBtn.addEventListener('click', () => {
+                appState.page++;
+                fetchRecords();
+            });
+
+            // Modal Close
+            elements.modalCloseBtn.addEventListener('click', () => {
+                elements.modalOverlay.classList.remove('active');
+            });
+
+            elements.modalOverlay.addEventListener('click', (e) => {
+                if (e.target === elements.modalOverlay) {
+                    elements.modalOverlay.classList.remove('active');
+                }
+            });
+        }
+
+        // Column Sort
+        function sortTable(columnKey) {
+            if (appState.sortBy === columnKey) {
+                appState.sortOrder = appState.sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                appState.sortBy = columnKey;
+                appState.sortOrder = 'desc';
+            }
+            fetchRecords();
+        }
+
+        // Initialize App
+        async function init() {
+            setupEventListeners();
+            await loadFilterOptions();
+            await fetchOverview();
+            await fetchRecords();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

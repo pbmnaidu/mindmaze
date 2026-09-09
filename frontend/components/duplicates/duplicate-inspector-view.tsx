@@ -62,7 +62,7 @@ export function DuplicateInspectorView() {
     <>
       <PageHeader
         title="Duplicate Inspector"
-        description={`Potentially similar works within ${label}. Similarity is computed with TF-IDF and cosine similarity; a high score indicates a candidate for verification, not a confirmed duplicate.`}
+        description={`Potentially similar works within ${label}. Similarity is computed with TF-IDF and cosine similarity; a high score indicates a candidate for verification, not a confirmed duplicate. Repeat recommendations in the same or similar constituency/location within 180 days are also checked as compliance rule C02.`}
       />
 
       <DataSourceNotice source={duplicates.data?.source} />

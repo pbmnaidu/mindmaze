@@ -26,7 +26,7 @@ export interface StateSummary {
 }
 
 export interface CategorySummary {
-  work_category: string;
+  main_sector: string;
   total_works: number;
   total_sanctioned: number;
   high_risk_works: number;
@@ -55,6 +55,7 @@ export interface ExpenditureTrip {
 export interface WorkRecord {
   work_id: string;
   work_category: string;
+  main_sector?: string;
   State: string;
   Constituency: string;
   state?: string;
@@ -75,9 +76,6 @@ export interface WorkRecord {
   financial_risk_score: number;
   financial_risk_level: string;
   financial_explanation: string;
-  vendor_risk_score: number;
-  vendor_risk_level: string;
-  vendor_risk_explanation: string;
   duplicate_risk_score: number;
   compliance_risk_score: number;
   compliance_risk_level: string;
@@ -88,6 +86,25 @@ export interface WorkRecord {
   recommended_reviewer_action: string;
   amount_to_peer_ratio?: number;
   category_percentile?: number;
+  sanctioned_work_description?: string;
+  recommended_work_description?: string;
+  original_work_category?: string;
+  ai_work_domain?: string;
+  ai_work_category?: string;
+  effective_work_category?: string;
+  work_domain?: string;
+  work_subcategory?: string;
+  category_confidence?: number;
+  category_confidence_band?: string;
+  category_source?: string;
+  classification_reason?: string;
+  category_keywords_matched?: string[];
+  peer_group_level?: string;
+  peer_group_size?: number;
+  peer_group_quality?: string;
+  peer_group_median?: number;
+  peer_percentile?: number;
+  risk_reasons?: Array<Record<string, unknown>>;
 }
 
 export interface CandidateDuplicatePair {
