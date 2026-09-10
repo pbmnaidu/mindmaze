@@ -36,17 +36,17 @@ export function BucketBarChart({
           <CartesianGrid vertical={vertical} horizontal={!vertical} stroke={GRID_STROKE} />
           {vertical ? (
             <>
-              <XAxis type="number" allowDecimals={false} tick={AXIS_STYLE} axisLine={AXIS_LINE} tickLine={false} />
+              <XAxis type="number" domain={[0, "auto"]} allowDecimals={false} tick={AXIS_STYLE} axisLine={AXIS_LINE} tickLine={false} />
               <YAxis type="category" dataKey="label" width={120} tick={AXIS_STYLE} axisLine={false} tickLine={false} />
             </>
           ) : (
             <>
               <XAxis dataKey="label" tick={AXIS_STYLE} axisLine={AXIS_LINE} tickLine={false} interval={0} />
-              <YAxis allowDecimals={false} tick={AXIS_STYLE} axisLine={false} tickLine={false} width={36} />
+              <YAxis domain={[0, "auto"]} allowDecimals={false} tick={AXIS_STYLE} axisLine={false} tickLine={false} width={36} />
             </>
           )}
           <Tooltip cursor={{ fill: "var(--accent)" }} content={<ChartTooltip valueFormatter={(v) => formatNumber(v)} />} />
-          <Bar dataKey={seriesName} fill="var(--chart-1)" radius={vertical ? [0, 2, 2, 0] : [2, 2, 0, 0]} maxBarSize={vertical ? 18 : 48}>
+          <Bar dataKey={seriesName} fill="var(--chart-1)" radius={vertical ? [0, 2, 2, 0] : [2, 2, 0, 0]} maxBarSize={vertical ? 18 : 48} minPointSize={3}>
             {colors && rows.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
           </Bar>
         </BarChart>

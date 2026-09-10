@@ -39,6 +39,21 @@ const METHODS = [
   },
 ];
 
+const COMPLIANCE_RULES = [
+  ["C01", "Recommendation to sanction", "Sanction takes more than 45 days after recommendation.", "Critical"],
+  ["C02", "Repeat recommendation", "A similar work is recommended in the same or similar location within 180 days.", "Critical"],
+  ["C03", "Minimum completion window", "Completed in fewer than 15 days after sanction.", "Critical"],
+  ["C04", "Normal completion window", "Completed after 15 days and on or before 1 year after sanction.", "Compliant"],
+  ["C05", "No progress after 1 year", "More than 1 year has passed with no completion and no recorded progress.", "Anomaly"],
+  ["C06", "Extended completion window", "Progress exists, and the work is incomplete after 1 year but not more than 18 months after sanction.", "Monitor"],
+  ["C07", "Beyond 18 months", "Progress exists, but the work is still incomplete more than 18 months after sanction.", "Critical"],
+  ["C08", "Date consistency", "Dates do not follow recommendation, sanction, start, completion order.", "Warning"],
+  ["C09", "Expenditure consistency", "Recorded spending is higher than the sanctioned amount.", "Warning"],
+  ["C10", "Invalid financial data", "A financial value is negative or impossible.", "Data quality"],
+  ["C11", "Required information", "A required field for monitoring is missing.", "Data quality"],
+  ["C12", "Completion consistency", "The completion status does not match the completion date.", "Data quality"],
+];
+
 export function MethodologyView() {
   return (
     <>
@@ -146,6 +161,34 @@ export function MethodologyView() {
               </div>
             </div>
           </CardContent>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-3" aria-labelledby="compliance-rules-heading">
+        <SectionHeading title="Compliance rules C01 to C12" description="These rules explain exactly why a compliance score is raised. Missing images are optional and do not create a failure by themselves." />
+        <Card className="gap-0 overflow-hidden rounded-md p-0 shadow-none">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-xs">
+              <thead className="bg-muted/60 text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-medium">ID</th>
+                  <th className="px-3 py-2 font-medium">Rule</th>
+                  <th className="px-3 py-2 font-medium">Condition</th>
+                  <th className="px-3 py-2 font-medium">Meaning</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {COMPLIANCE_RULES.map(([id, rule, condition, meaning]) => (
+                  <tr key={id} className="align-top hover:bg-muted/30">
+                    <td className="whitespace-nowrap px-3 py-2 font-mono font-semibold">{id}</td>
+                    <td className="px-3 py-2 font-medium">{rule}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{condition}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{meaning}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </section>
 

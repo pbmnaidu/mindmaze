@@ -99,11 +99,11 @@ Compliance has the highest weight in the final score because it checks dates, pr
 |---|---|---|---|
 | C01 | Recommendation to sanction | More than 45 days | Critical |
 | C02 | Repeat recommendation | Similar work and location within 180 days | Critical |
-| C03 | Minimum completion window | Completed in under 15 days | Critical |
-| C04 | Normal completion window | Completed from 15 days to 1 year | Compliant |
-| C05 | No progress after 1 year | No completion or recorded progress | Anomaly |
-| C06 | Extended completion window | Partial progress within 18 months | Monitor |
-| C07 | Beyond 18 months | Partial-progress work still incomplete | Critical |
+| C03 | Minimum completion window | Completed in fewer than 15 days after sanction | Critical |
+| C04 | Normal completion window | Completed after 15 days and on or before 1 year after sanction | Compliant |
+| C05 | No progress after 1 year | More than 1 year passed with no completion or recorded progress | Anomaly |
+| C06 | Extended completion window | Progress exists and work is incomplete after 1 year but not more than 18 months after sanction | Monitor |
+| C07 | Beyond 18 months | Progress exists but work is still incomplete more than 18 months after sanction | Critical |
 | C08 | Date consistency | Recommendation <= sanction <= start <= completion | Warning or critical |
 | C09 | Expenditure consistency | Spending is above sanctioned amount | Warning or critical |
 | C10 | Invalid financial data | Negative or impossible values | Data quality |

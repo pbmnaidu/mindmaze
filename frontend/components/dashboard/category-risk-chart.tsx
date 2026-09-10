@@ -29,11 +29,11 @@ export function CategoryRiskChart({ categories }: { categories: CategorySummary[
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }} barCategoryGap={6}>
               <CartesianGrid horizontal={false} stroke={GRID_STROKE} />
-              <XAxis type="number" allowDecimals={false} tick={AXIS_STYLE} axisLine={AXIS_LINE} tickLine={false} />
+              <XAxis type="number" domain={[0, "auto"]} allowDecimals={false} tick={AXIS_STYLE} axisLine={AXIS_LINE} tickLine={false} />
               <YAxis type="category" dataKey="category" width={130} tick={AXIS_STYLE} axisLine={false} tickLine={false} />
               <Tooltip cursor={{ fill: "var(--accent)" }} content={<ChartTooltip valueFormatter={(v) => formatNumber(v)} />} />
               <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="High risk works" fill="var(--risk-high)" radius={[0, 2, 2, 0]} maxBarSize={18} />
+              <Bar dataKey="High risk works" fill="var(--risk-high)" radius={[0, 2, 2, 0]} maxBarSize={18} minPointSize={3} />
               <Bar dataKey="Total works" fill="var(--chart-2)" radius={[0, 2, 2, 0]} maxBarSize={18} hide />
             </BarChart>
           </ResponsiveContainer>

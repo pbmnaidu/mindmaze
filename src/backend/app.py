@@ -239,6 +239,7 @@ def get_risk_monitor_queue(
     severity: str = None,
     completion_status: str = None,
     search: str = None,
+    monitoring_group: str = None,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200)
 ):
@@ -256,6 +257,15 @@ def get_risk_monitor_queue(
         df = df[df[category_field].fillna("").str.lower() == category.strip().lower()]
     if severity and severity.strip():
         df = df[df["overall_risk_level"].str.upper() == severity.strip().upper()]
+    if monitoring_group == "stale_one_year":
+        sanction_dates = pd.to_datetime(df["sanction_date"], errors="coerce")
+        days_since_sanction = (pd.Timestamp.now().normalize() - sanction_dates).dt.days
+        status = df.get("work_status", pd.Series("", index=df.index)).fillna("").astype(str).str.lower()
+        expenditure = pd.to_numeric(df.get("effective_expenditure", 0), errors="coerce").fillna(0)
+        no_update = ~_completion_mask(df) & ~status.str.contains("complete|progress|ongoing", na=False) & expenditure.le(0)
+        df = df[days_since_sanction.ge(330) & no_update]
+    elif monitoring_group == "high_critical":
+        df = df[df["overall_risk_level"].str.upper().isin(["HIGH", "CRITICAL"])]
     if completion_status and completion_status.strip():
         status = completion_status.strip().lower()
         completed = _completion_mask(df)

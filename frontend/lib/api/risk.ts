@@ -45,6 +45,7 @@ export function fetchRiskQueue(params: RiskQueueParams) {
     search: params.search,
     page: params.page,
     limit: params.limit ?? DEFAULT_PAGE_SIZE,
+    monitoring_group: params.monitoring_group,
   });
   return apiGet<PaginatedResponse<WorkRecord>>(`/risk-monitor${query}`, () => sampleRiskQueue(params));
 }

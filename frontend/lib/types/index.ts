@@ -159,6 +159,7 @@ export interface RiskQueueParams {
   search?: string;
   page?: number;
   limit?: number;
+  monitoring_group?: "stale_one_year" | "high_critical";
 }
 
 export interface DuplicateQueryParams {
